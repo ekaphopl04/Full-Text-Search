@@ -1,6 +1,6 @@
-using Blogs.Api.Database;
-using Blogs.Api.Extensions;
-using Blogs.Api.Seed;
+using FullTextSearchDemo.Data;
+using FullTextSearchDemo.Models;
+using FullTextSearchDemo.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,9 +10,9 @@ builder.AddServiceDefaults();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddDbContext<BlogsDbContext>(o => o.UseNpgsql(builder.Configuration.GetConnectionString("blogs")));
+builder.Services.AddDbContext<AppDbContext>(o => o.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddHostedService<SeedDatabase>();
+builder.Services.AddScoped<ProductService>();
 
 var app = builder.Build();
 
@@ -26,25 +26,17 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapGet("blogs/contains", async (string searchTerm, BlogsDbContext context) =>
+app.MapGet("products/search", async (string searchTerm, ProductService productService) =>
 {
-    var blogs = await context.BlogPosts
-        .Where(b => 
-            b.Title.Contains(searchTerm) || 
-            b.Excerpt.Contains(searchTerm) || 
-            b.Content.Contains(searchTerm))
-        .Select(b => new
-        {
-            b.Slug,
-            b.Title,
-            b.Excerpt,
-            b.Date
-        })
-        .ToList();
-    
-    return blogs;
+    var products = await productService.SearchProductsAsync(searchTerm);
+    return products;
 });
 
-app.ApplyMigrations();
+// Apply migrations at startup
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    dbContext.Database.Migrate();
+}
 
 app.Run();
