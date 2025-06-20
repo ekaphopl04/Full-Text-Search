@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using NpgsqlTypes;
 
 namespace FullTextSearchDemo.Models
 {
@@ -23,6 +24,6 @@ namespace FullTextSearchDemo.Models
         public string Category { get; set; } = string.Empty;
         
         // This will store the tsvector for full-text search
-        public string SearchVector { get; set; } = string.Empty;
+        public NpgsqlTsVector SearchVector { get; set; }
     }
 }
