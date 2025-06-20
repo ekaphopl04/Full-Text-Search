@@ -78,7 +78,7 @@ app.MapGet("/blogs/contains/normalized", (string searchTerm, BlogsDbContext cont
         .ToList();
 
     return blogs;
-})
+});
 
 
 app.Run();
