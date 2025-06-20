@@ -59,7 +59,7 @@ app.MapGet("/blogs/contains", (string searchTerm, BlogsDbContext context) =>
         .ToList();
 
     return blogs;
-})
+});
 
 app.MapGet("/blogs/contains/normalized", (string searchTerm, BlogsDbContext context) =>
 {
