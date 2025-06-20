@@ -45,27 +45,42 @@ app.MapControllers();
 app.MapGet("/blogs/contains", (string searchTerm, BlogsDbContext context) =>
 {
     var blogs = context.BlogPosts
-        .Where(b => 
-            b.Title.ToLower().Contains(searchTerm) || 
-            b.Excerpt.ToLower().Contains(searchTerm) || 
-            b.Content.ToLower().Contains(searchTerm))
-        .Select(b => new { b.Slug,
-         b.Title,
-         b.Excerpt,
-         b.Content,
-         b.Date })
+        .Where(b =>
+            b.Title.Contains(searchTerm) ||
+            b.Excerpt.Contains(searchTerm) ||
+            b.Content.Contains(searchTerm))
+        .Select(b => new
+        {
+            b.Slug,
+            b.Title,
+            b.Excerpt,
+            b.Date
+        })
         .ToList();
-        
+
     return blogs;
 })
-.WithName("SearchBlogs")
-.WithOpenApi();
+
+app.MapGet("/blogs/contains/normalized", (string searchTerm, BlogsDbContext context) =>
+{
+    var blogs = context.BlogPosts
+        .Where(b =>
+            b.Title.ToLower().Contains(searchTerm) ||
+            b.Excerpt.ToLower().Contains(searchTerm) ||
+            b.Content.ToLower().Contains(searchTerm))
+        .Select(b => new
+        {
+            b.Slug,
+            b.Title,
+            b.Excerpt,
+            b.Date
+        })
+        .ToList();
+
+    return blogs;
+})
 
 
 app.Run();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
 
