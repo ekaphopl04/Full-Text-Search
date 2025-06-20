@@ -20,6 +20,11 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // Register services
 builder.Services.AddScoped<ProductService>();
+builder.Services.AddScoped<BlogService>();
+
+// Configure PostgreSQL for BlogsDbContext
+builder.Services.AddDbContext<BlogsDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 var app = builder.Build();
 
@@ -51,12 +56,21 @@ using (var scope = app.Services.CreateScope())
     var services = scope.ServiceProvider;
     try
     {
-        var dbContext = services.GetRequiredService<AppDbContext>();
-        dbContext.Database.Migrate();
+        // Migrate and seed AppDbContext
+        var appDbContext = services.GetRequiredService<AppDbContext>();
+        appDbContext.Database.Migrate();
         
-        // Seed the database
+        // Seed products
         var productService = services.GetRequiredService<ProductService>();
         await productService.SeedDatabaseAsync();
+        
+        // Migrate and seed BlogsDbContext
+        var blogsDbContext = services.GetRequiredService<BlogsDbContext>();
+        blogsDbContext.Database.Migrate();
+        
+        // Seed blogs
+        var blogService = services.GetRequiredService<BlogService>();
+        await blogService.SeedBlogsAsync();
     }
     catch (Exception ex)
     {
@@ -85,27 +99,20 @@ app.MapGet("/weatherforecast", () =>
 .WithName("GetWeatherForecast")
 .WithOpenApi();
 
-app.MapGet("blogs/contains", (string searchTerm, BlogsDbContext context) =>
+app.MapGet("blogs/contains", async (string searchTerm, BlogService blogService) =>
 {
-    var blogs = context.BlogPosts
-        .Where(b => 
-            b.Title.Contains(searchTerm) || 
-            b.Excerpt.Contains(searchTerm) || 
-            b.Content.Contains(searchTerm))
-        .Select(b => new
-        {
-            b.Slug,
-            b.Title,
-            b.Excerpt,
-            b.Date
-        })
-        .ToList();
-        
-    return blogs;
+    var blogs = await blogService.SearchBlogsAsync(searchTerm);
+    return blogs.Select(b => new
+    {
+        b.Slug,
+        b.Title,
+        b.Excerpt,
+        b.Date
+    });
 });
 
 // Advanced blog search with filtering and sorting
-app.MapGet("blogs/search", (string? searchTerm, string? category, string? sortBy, bool ascending, int? pageSize, int? pageNumber, BlogsDbContext context) =>
+app.MapGet("blogs/search", async (string? searchTerm, string? category, string? sortBy, bool ascending = true, int? pageSize = 10, int? pageNumber = 1, BlogsDbContext context) =>
 {
     // Start with all blog posts
     IQueryable<BlogPost> query = context.BlogPosts;
@@ -153,11 +160,11 @@ app.MapGet("blogs/search", (string? searchTerm, string? category, string? sortBy
     int page = pageNumber ?? 1; // Default page number is 1
     
     // Calculate total count and pages
-    int totalCount = query.Count();
+    int totalCount = await query.CountAsync();
     int totalPages = (int)Math.Ceiling(totalCount / (double)size);
     
     // Get paginated results
-    var results = query
+    var results = await query
         .Skip((page - 1) * size)
         .Take(size)
         .Select(b => new
@@ -168,7 +175,7 @@ app.MapGet("blogs/search", (string? searchTerm, string? category, string? sortBy
             b.Category,
             b.Date
         })
-        .ToList();
+        .ToListAsync();
     
     // Return results with pagination metadata
     return new
