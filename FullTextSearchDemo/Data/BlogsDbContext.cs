@@ -11,25 +11,14 @@ namespace FullTextSearchDemo.Data
 
         public DbSet<BlogPost> BlogPosts { get; set; } = null!;
 
+        public DbSet<BlogPostVector> BlogPostVectors { get; set; } = null!;
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.ApplyConfiguration(new BlogPostConfiguration());
+            modelBuilder.ApplyConfiguration(new BlogPostVectorConfiguration());
+         
             base.OnModelCreating(modelBuilder);
-            
-            // Configure the BlogPost entity
-            modelBuilder.Entity<BlogPost>()
-                .HasKey(b => b.Slug);
-                
-            modelBuilder.Entity<BlogPost>()
-                .Property(b => b.Slug)
-                .IsRequired();
-                
-            modelBuilder.Entity<BlogPost>()
-                .Property(b => b.Title)
-                .IsRequired();
-                
-            // Create a full-text search index on Title, Excerpt, and Content
-            modelBuilder.Entity<BlogPost>()
-                .HasIndex(b => new { b.Title, b.Excerpt, b.Content });
         }
     }
 }

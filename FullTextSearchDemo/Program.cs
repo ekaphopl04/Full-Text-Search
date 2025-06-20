@@ -101,18 +101,18 @@ app.MapGet("/blogs/full-text", (string searchTerm, BlogsDbContext context) =>
 });
 
 // Basic search using LIKE/Contains
-app.MapGet("/blogs/full-text/ranking", (string searchTerm, BlogsDbContext context) =>
+app.MapGet("/blogs/vector/full-text/ranking", (string searchTerm, BlogsDbContext context) =>
 {
-    var blogs = context.BlogPosts
+    var blogs = context.BlogPostVectors
         .Where(b =>
-            EF.Functions.ToTsVector("english", b.Title + " " + b.Excerpt + " " + b.Content).Matches(EF.Functions.PhraseToTsQuery("english", searchTerm)))
+            b.SearchVector.Matches(EF.Functions.PhraseToTsQuery("english", searchTerm)))
         .Select(b => new
         {
             b.Slug,
             b.Title,
             b.Excerpt,
             b.Date,
-            Rank = EF.Functions.ToTsVector("english", b.Title + " " + b.Excerpt + " " + b.Content)
+            Rank = b.SearchVector
             .Rank(EF.Functions.PhraseToTsQuery("english", searchTerm))
         })
         .OrderByDescending(b => b.Rank)
