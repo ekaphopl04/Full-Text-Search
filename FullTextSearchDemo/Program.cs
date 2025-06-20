@@ -26,9 +26,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapGet("blogs/contains", (string searchTerm, BlogsDbContext context) =>
+app.MapGet("blogs/contains", async (string searchTerm, BlogsDbContext context) =>
 {
-    var blogs = context.BlogPosts
+    var blogs = await context.BlogPosts
         .Where(b => 
             b.Title.Contains(searchTerm) || 
             b.Excerpt.Contains(searchTerm) || 
@@ -40,7 +40,9 @@ app.MapGet("blogs/contains", (string searchTerm, BlogsDbContext context) =>
             b.Excerpt,
             b.Date
         })
-        .ToListAsync();
+        .ToList();
+    
+    return blogs;
 });
 
 app.ApplyMigrations();
