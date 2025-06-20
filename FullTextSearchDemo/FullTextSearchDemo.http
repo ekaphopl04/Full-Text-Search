@@ -1,0 +1,6 @@
+@FullTextSearchDemo_HostAddress = http://localhost:5036
+
+GET {{FullTextSearchDemo_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
