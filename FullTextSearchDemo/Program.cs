@@ -36,6 +36,15 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+// Add product search endpoint
+app.MapGet("/products/search", async (string searchTerm, ProductService productService) =>
+{
+    var results = await productService.SearchProductsAsync(searchTerm);
+    return results;
+})
+.WithName("SearchProducts")
+.WithOpenApi();
+
 // Apply migrations and seed data at startup
 using (var scope = app.Services.CreateScope())
 {
@@ -74,6 +83,104 @@ app.MapGet("/weatherforecast", () =>
     return forecast;
 })
 .WithName("GetWeatherForecast")
+.WithOpenApi();
+
+app.MapGet("blogs/contains", (string searchTerm, BlogsDbContext context) =>
+{
+    var blogs = context.BlogPosts
+        .Where(b => 
+            b.Title.Contains(searchTerm) || 
+            b.Excerpt.Contains(searchTerm) || 
+            b.Content.Contains(searchTerm))
+        .Select(b => new
+        {
+            b.Slug,
+            b.Title,
+            b.Excerpt,
+            b.Date
+        })
+        .ToList();
+        
+    return blogs;
+});
+
+// Advanced blog search with filtering and sorting
+app.MapGet("blogs/search", (string? searchTerm, string? category, string? sortBy, bool ascending, int? pageSize, int? pageNumber, BlogsDbContext context) =>
+{
+    // Start with all blog posts
+    IQueryable<BlogPost> query = context.BlogPosts;
+    
+    // Apply search term filter if provided
+    if (!string.IsNullOrWhiteSpace(searchTerm))
+    {
+        query = query.Where(b => 
+            b.Title.Contains(searchTerm) || 
+            b.Excerpt.Contains(searchTerm) || 
+            b.Content.Contains(searchTerm));
+    }
+    
+    // Apply category filter if provided
+    if (!string.IsNullOrWhiteSpace(category))
+    {
+        query = query.Where(b => b.Category == category);
+    }
+    
+    // Apply sorting
+    if (!string.IsNullOrWhiteSpace(sortBy))
+    {
+        switch (sortBy.ToLower())
+        {
+            case "date":
+                query = ascending ? query.OrderBy(b => b.Date) : query.OrderByDescending(b => b.Date);
+                break;
+            case "title":
+                query = ascending ? query.OrderBy(b => b.Title) : query.OrderByDescending(b => b.Title);
+                break;
+            default:
+                // Default sort by date
+                query = ascending ? query.OrderBy(b => b.Date) : query.OrderByDescending(b => b.Date);
+                break;
+        }
+    }
+    else
+    {
+        // Default sort by date descending (newest first)
+        query = query.OrderByDescending(b => b.Date);
+    }
+    
+    // Apply pagination
+    int size = pageSize ?? 10; // Default page size is 10
+    int page = pageNumber ?? 1; // Default page number is 1
+    
+    // Calculate total count and pages
+    int totalCount = query.Count();
+    int totalPages = (int)Math.Ceiling(totalCount / (double)size);
+    
+    // Get paginated results
+    var results = query
+        .Skip((page - 1) * size)
+        .Take(size)
+        .Select(b => new
+        {
+            b.Slug,
+            b.Title,
+            b.Excerpt,
+            b.Category,
+            b.Date
+        })
+        .ToList();
+    
+    // Return results with pagination metadata
+    return new
+    {
+        TotalCount = totalCount,
+        TotalPages = totalPages,
+        CurrentPage = page,
+        PageSize = size,
+        Results = results
+    };
+})
+.WithName("SearchBlogs")
 .WithOpenApi();
 
 app.Run();
