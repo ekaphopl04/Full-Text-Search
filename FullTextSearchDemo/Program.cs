@@ -16,7 +16,12 @@ builder.Services.AddSwaggerGen();
 
 // Configure PostgreSQL with EF Core
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+    options.EnableSensitiveDataLogging();
+    options.EnableDetailedErrors();
+    options.LogTo(Console.WriteLine, LogLevel.Information);
+});
 
 // Register services
 builder.Services.AddScoped<ProductService>();
