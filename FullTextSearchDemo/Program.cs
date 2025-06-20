@@ -21,12 +21,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Register services
 builder.Services.AddScoped<ProductService>();
 
-// Configure PostgreSQL for BlogsDbContext
-builder.Services.AddDbContext<BlogsDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-    
-builder.Services.AddScoped<BlogService>();
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
