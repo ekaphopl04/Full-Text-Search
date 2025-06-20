@@ -42,34 +42,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Apply migrations and seed data at startup
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    try
-    {
-        // Migrate and seed AppDbContext
-        var appDbContext = services.GetRequiredService<AppDbContext>();
-        appDbContext.Database.Migrate();
-        
-        // Seed products
-        var productService = services.GetRequiredService<ProductService>();
-        await productService.SeedDatabaseAsync();
-        
-        // Migrate and seed BlogsDbContext
-        var blogsDbContext = services.GetRequiredService<BlogsDbContext>();
-        blogsDbContext.Database.Migrate();
-        
-        // Seed blogs
-        var blogService = services.GetRequiredService<BlogService>();
-        await blogService.SeedBlogsAsync();
-    }
-    catch (Exception ex)
-    {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred while migrating or seeding the database.");
-    }
-}
 
 app.MapGet("/weatherforecast", () =>
 {
