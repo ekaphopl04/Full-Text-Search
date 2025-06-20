@@ -18,8 +18,7 @@ namespace FullTextSearchDemo.Data.Migrations.BlogsDb
                     Title = table.Column<string>(nullable: false),
                     Excerpt = table.Column<string>(nullable: true),
                     Content = table.Column<string>(nullable: true),
-                    Category = table.Column<string>(nullable: true),
-                    Date = table.Column<DateTime>(nullable: false)
+                    Date = table.Column<string>(nullable: false)
                 },
                 constraints: table =>
                 {

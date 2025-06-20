@@ -15,7 +15,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Configure PostgreSQL with EF Core
-builder.Services.AddDbContext<AppDbContext>(options =>
+builder.Services.AddDbContext<BlogsDbContext>(options =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
     options.EnableSensitiveDataLogging();
@@ -24,7 +24,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 });
 
 // Register services
-builder.Services.AddScoped<ProductService>();
+builder.Services.AddScoped<BlogService>();
 
 var app = builder.Build();
 
@@ -42,24 +42,23 @@ app.UseAuthorization();
 app.MapControllers();
 
 
-app.MapGet("/weatherforecast", () =>
+app.MapGet("/blogs/contains", (string searchTerm, BlogsDbContext context) =>
 {
-    string[] summaries = new[]
-    {
-        "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-    };
-    
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
+    var blogs = context.BlogPosts
+        .Where(b => 
+            b.Title.ToLower().Contains(searchTerm) || 
+            b.Excerpt.ToLower().Contains(searchTerm) || 
+            b.Content.ToLower().Contains(searchTerm))
+        .Select(b => new { b.Slug,
+         b.Title,
+         b.Excerpt,
+         b.Content,
+         b.Date })
+        .ToList();
+        
+    return blogs;
 })
-.WithName("GetWeatherForecast")
+.WithName("SearchBlogs")
 .WithOpenApi();
 
 
@@ -69,3 +68,4 @@ record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }
+

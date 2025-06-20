@@ -11,7 +11,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace FullTextSearchDemo.Migrations
 {
-    [DbContext(typeof(AppDbContext))]
+    [DbContext(typeof(BlogsDbContext))]
     [Migration("20250620053358_InitialCreate")]
     partial class InitialCreate
     {

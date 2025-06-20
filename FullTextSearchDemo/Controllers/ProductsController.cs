@@ -1,6 +1,9 @@
 using FullTextSearchDemo.Models;
 using FullTextSearchDemo.Services;
 using Microsoft.AspNetCore.Mvc;
+using FullTextSearchDemo.Data;
+using Microsoft.EntityFrameworkCore;
+using System.Data.Common;
 
 namespace FullTextSearchDemo.Controllers
 {
@@ -8,38 +11,33 @@ namespace FullTextSearchDemo.Controllers
     [Route("api/[controller]")]
     public class ProductsController : ControllerBase
     {
-        private readonly ProductService _productService;
+        private readonly BlogService _blogService;
+        private readonly BlogsDbContext _dbContext;
 
-        public ProductsController(ProductService productService)
+        public ProductsController(BlogService blogService, BlogsDbContext dbContext)
         {
-            _productService = productService;
+            _blogService = blogService;
+            _dbContext = dbContext;
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
+        public async Task<ActionResult<IEnumerable<BlogPost>>> GetProducts()
         {
-            var products = await _productService.GetAllProductsAsync();
-            return Ok(products);
+            var blogs = await _blogService.GetAllBlogsAsync();
+            return Ok(blogs);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<Product>> GetProduct(int id)
+        public async Task<ActionResult<BlogPost>> GetProduct(string id)
         {
-            var product = await _productService.GetProductByIdAsync(id);
+            var blog = await _blogService.GetBlogBySlugAsync(id);
             
-            if (product == null)
+            if (blog == null)
             {
                 return NotFound();
             }
 
-            return Ok(product);
-        }
-
-        [HttpPost]
-        public async Task<ActionResult<Product>> CreateProduct(Product product)
-        {
-            await _productService.AddProductAsync(product);
-            return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, product);
+            return Ok(blog);
         }
     }
 }

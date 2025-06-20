@@ -62,8 +62,7 @@ namespace FullTextSearchDemo.Services
                         Title = "Getting Started with Full-Text Search",
                         Excerpt = "Learn how to implement full-text search in your applications",
                         Content = "Full-text search is a powerful technique for searching large amounts of text data efficiently. This post covers the basics of implementing full-text search in your applications.",
-                        Category = "Development",
-                        Date = DateTime.UtcNow.AddDays(-5)
+                        Date = "September 15, 2023"
                     },
                     new BlogPost
                     {
@@ -71,8 +70,7 @@ namespace FullTextSearchDemo.Services
                         Title = "Advanced Search Techniques",
                         Excerpt = "Explore advanced techniques for implementing search functionality",
                         Content = "This post explores advanced search techniques including fuzzy matching, relevance scoring, and search result highlighting to enhance your application's search capabilities.",
-                        Category = "Development",
-                        Date = DateTime.UtcNow.AddDays(-3)
+                        Date = "September 15, 2023"
                     },
                     new BlogPost
                     {
@@ -80,8 +78,7 @@ namespace FullTextSearchDemo.Services
                         Title = "Optimizing PostgreSQL for Search",
                         Excerpt = "Tips and tricks for optimizing PostgreSQL for full-text search",
                         Content = "PostgreSQL offers powerful full-text search capabilities. This post covers how to optimize your PostgreSQL database for efficient full-text search operations.",
-                        Category = "Database",
-                        Date = DateTime.UtcNow.AddDays(-1)
+                        Date = "September 15, 2023"
                     },
                     new BlogPost
                     {
@@ -89,8 +86,7 @@ namespace FullTextSearchDemo.Services
                         Title = "Search UI Best Practices",
                         Excerpt = "Design tips for creating effective search interfaces",
                         Content = "A good search interface can make or break your application. This post covers best practices for designing search interfaces that are both effective and user-friendly.",
-                        Category = "UI/UX",
-                        Date = DateTime.UtcNow
+                        Date = "September 15, 2023"
                     }
                 };
 

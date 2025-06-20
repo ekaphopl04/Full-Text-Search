@@ -17,7 +17,7 @@ namespace FullTextSearchDemo.Data
             
             // Configure the BlogPost entity
             modelBuilder.Entity<BlogPost>()
-                .HasKey(b => b.Id);
+                .HasKey(b => b.Slug);
                 
             modelBuilder.Entity<BlogPost>()
                 .Property(b => b.Slug)
