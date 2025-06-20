@@ -1,124 +1,138 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.OpenApi.Models;
 using Microsoft.Extensions.Hosting;
 using FullTextSearchDemo.Data;
 using FullTextSearchDemo.Models;
 using FullTextSearchDemo.Services;
+using Microsoft.AspNetCore.Http;
+using System.Text.Json;
 
-var host = Host.CreateDefaultBuilder(args)
-    .ConfigureServices((context, services) =>
-    {
-        // Configure PostgreSQL with EF Core
-        services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql("Host=localhost;Database=fulltext_search_demo;Username=postgres;Password=postgres"));
-        
-        // Register our ProductService
-        services.AddScoped<ProductService>();
-    })
-    .Build();
+var builder = WebApplication.CreateBuilder(args);
 
-// Get the service provider
-using var serviceScope = host.Services.CreateScope();
-var serviceProvider = serviceScope.ServiceProvider;
+// Add services to the container
+// Configure PostgreSQL with EF Core
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql("Host=localhost;Database=fulltext_search_demo;Username=postgres;Password=postgres"));
 
-// Get the database context
-var dbContext = serviceProvider.GetRequiredService<AppDbContext>();
+// Register our ProductService
+builder.Services.AddScoped<ProductService>();
 
-// Ensure the database is created and migrations are applied
-dbContext.Database.Migrate();
+// Add controllers
+builder.Services.AddControllers();
 
-// Get the product service
-var productService = serviceProvider.GetRequiredService<ProductService>();
-
-// Add some sample products if none exist
-if (!await dbContext.Products.AnyAsync())
+// Add Swagger services
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
 {
-    Console.WriteLine("Adding sample products...");
-    
-    await productService.AddProductAsync(new Product
+    c.SwaggerDoc("v1", new OpenApiInfo
     {
-        Name = "iPhone 15 Pro",
-        Description = "Apple's latest flagship smartphone with A17 Pro chip and advanced camera system",
-        Price = 999.99m,
-        Category = "Smartphones"
-    });
-    
-    await productService.AddProductAsync(new Product
-    {
-        Name = "Samsung Galaxy S24 Ultra",
-        Description = "Samsung's premium smartphone with S Pen support and powerful camera capabilities",
-        Price = 1199.99m,
-        Category = "Smartphones"
-    });
-    
-    await productService.AddProductAsync(new Product
-    {
-        Name = "MacBook Pro 16",
-        Description = "High-performance laptop with M3 Pro or M3 Max chip for professional workflows",
-        Price = 2499.99m,
-        Category = "Laptops"
-    });
-    
-    await productService.AddProductAsync(new Product
-    {
-        Name = "Dell XPS 15",
-        Description = "Premium Windows laptop with InfinityEdge display and powerful Intel processors",
-        Price = 1799.99m,
-        Category = "Laptops"
-    });
-    
-    await productService.AddProductAsync(new Product
-    {
-        Name = "iPad Air",
-        Description = "Versatile tablet with M2 chip for productivity and entertainment",
-        Price = 599.99m,
-        Category = "Tablets"
-    });
-    
-    Console.WriteLine("Sample products added successfully!");
-}
-
-// Demonstrate full-text search
-Console.WriteLine("\nFull-Text Search Demo\n");
-
-while (true)
-{
-    Console.Write("Enter search term (or 'exit' to quit): ");
-    var searchTerm = Console.ReadLine();
-    
-    if (string.IsNullOrWhiteSpace(searchTerm) || searchTerm.ToLower() == "exit")
-    {
-        break;
-    }
-    
-    // Format the search term for PostgreSQL full-text search
-    // Replace spaces with & for AND operations in tsquery
-    var formattedSearchTerm = string.Join(" & ", searchTerm.Split(' ', StringSplitOptions.RemoveEmptyEntries));
-    
-    Console.WriteLine($"\nSearching for: {searchTerm} (formatted as: {formattedSearchTerm})\n");
-    
-    var results = await productService.SearchProductsAsync(formattedSearchTerm);
-    
-    if (results.Any())
-    {
-        Console.WriteLine($"Found {results.Count} results:\n");
-        
-        foreach (var product in results)
+        Title = "Full-Text Search Demo API",
+        Version = "v1",
+        Description = "A simple API demonstrating full-text search capabilities with PostgreSQL",
+        Contact = new OpenApiContact
         {
-            Console.WriteLine($"ID: {product.Id}");
-            Console.WriteLine($"Name: {product.Name}");
-            Console.WriteLine($"Description: {product.Description}");
-            Console.WriteLine($"Price: ${product.Price}");
-            Console.WriteLine($"Category: {product.Category}");
-            Console.WriteLine(new string('-', 50));
+            Name = "Your Name",
+            Email = "your.email@example.com"
         }
-    }
-    else
-    {
-        Console.WriteLine("No results found.");
-    }
-    
-    Console.WriteLine();
+    });
+});
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Full-Text Search Demo API v1"));
 }
 
-Console.WriteLine("Thank you for using Full-Text Search Demo!");
+app.UseHttpsRedirection();
+app.UseAuthorization();
+app.MapControllers();
+
+// Add minimal API endpoints
+app.MapGet("/api/products/search", async (string query, ProductService productService) =>
+{
+    var formattedSearchTerm = string.Join(" & ", query.Split(' ', StringSplitOptions.RemoveEmptyEntries));
+    var results = await productService.SearchProductsAsync(formattedSearchTerm);
+    return Results.Ok(results);
+});
+
+app.MapGet("/api/products", async (ProductService productService) =>
+{
+    var products = await productService.GetAllProductsAsync();
+    return Results.Ok(products);
+});
+
+// Initialize database and seed data
+using (var scope = app.Services.CreateScope())
+{
+    var serviceProvider = scope.ServiceProvider;
+    var dbContext = serviceProvider.GetRequiredService<AppDbContext>();
+    var productService = serviceProvider.GetRequiredService<ProductService>();
+
+    // Ensure the database is created and migrations are applied
+    dbContext.Database.Migrate();
+
+    // Add sample products if none exist
+    if (!await dbContext.Products.AnyAsync())
+    {
+        await ProductSeeder.SeedSampleProductsAsync(productService);
+    }
+}
+
+// Start the web application
+app.Run();
+
+// Extension method to help with seeding data
+public static class ProductSeeder
+{
+    public static async Task SeedSampleProductsAsync(ProductService productService)
+    {
+        Console.WriteLine("Adding sample products...");
+        
+        await productService.AddProductAsync(new Product
+        {
+            Name = "iPhone 15 Pro",
+            Description = "Apple's latest flagship smartphone with A17 Pro chip and advanced camera system",
+            Price = 999.99m,
+            Category = "Smartphones"
+        });
+        
+        await productService.AddProductAsync(new Product
+        {
+            Name = "Samsung Galaxy S24 Ultra",
+            Description = "Samsung's premium smartphone with S Pen support and powerful camera capabilities",
+            Price = 1199.99m,
+            Category = "Smartphones"
+        });
+        
+        await productService.AddProductAsync(new Product
+        {
+            Name = "MacBook Pro 16",
+            Description = "High-performance laptop with M3 Pro or M3 Max chip for professional workflows",
+            Price = 2499.99m,
+            Category = "Laptops"
+        });
+        
+        await productService.AddProductAsync(new Product
+        {
+            Name = "Dell XPS 15",
+            Description = "Premium Windows laptop with InfinityEdge display and powerful Intel processors",
+            Price = 1799.99m,
+            Category = "Laptops"
+        });
+        
+        await productService.AddProductAsync(new Product
+        {
+            Name = "iPad Air",
+            Description = "Versatile tablet with M2 chip for productivity and entertainment",
+            Price = 599.99m,
+            Category = "Tablets"
+        });
+        
+        Console.WriteLine("Sample products added successfully!");
+    }
+}
