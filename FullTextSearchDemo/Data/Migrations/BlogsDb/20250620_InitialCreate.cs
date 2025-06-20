@@ -25,11 +25,20 @@ namespace FullTextSearchDemo.Data.Migrations.BlogsDb
                     table.PrimaryKey("PK_BlogPosts", x => x.Id);
                 });
 
-            // Create index for full-text search
-            migrationBuilder.CreateIndex(
-                name: "IX_BlogPosts_Title_Excerpt_Content",
-                table: "BlogPosts",
-                columns: new[] { "Title", "Excerpt", "Content" });
+            // Create full-text search index using PostgreSQL's GIN and tsvector
+            migrationBuilder.Sql(@"
+                CREATE INDEX IX_BlogPosts_Title_Excerpt_Content ON ""BlogPosts"" USING GIN (
+                    to_tsvector('english', ""Title"" || ' ' || ""Excerpt"" || ' ' || ""Content"")
+                );
+            ");
+            
+            // Alternative approach using EF Core annotations
+            // migrationBuilder.CreateIndex(
+            //     name: "IX_BlogPosts_Title_Excerpt_Content",
+            //     table: "BlogPosts",
+            //     columns: new[] { "Title", "Excerpt", "Content" })
+            //     .Annotation("Npgsql:IndexMethod", "GIN")
+            //     .Annotation("Npgsql:TsVectorConfig", "english");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)

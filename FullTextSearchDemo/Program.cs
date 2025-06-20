@@ -42,6 +42,7 @@ app.UseAuthorization();
 app.MapControllers();
 
 
+// Basic search using LIKE/Contains
 app.MapGet("/blogs/contains", (string searchTerm, BlogsDbContext context) =>
 {
     var blogs = context.BlogPosts
@@ -61,13 +62,32 @@ app.MapGet("/blogs/contains", (string searchTerm, BlogsDbContext context) =>
     return blogs;
 });
 
+// Case-insensitive search using LIKE/Contains
 app.MapGet("/blogs/contains/normalized", (string searchTerm, BlogsDbContext context) =>
 {
     var blogs = context.BlogPosts
         .Where(b =>
-            b.Title.ToLower().Contains(searchTerm) ||
-            b.Excerpt.ToLower().Contains(searchTerm) ||
-            b.Content.ToLower().Contains(searchTerm))
+            b.Title.ToLower().Contains(searchTerm.ToLower()) ||
+            b.Excerpt.ToLower().Contains(searchTerm.ToLower()) ||
+            b.Content.ToLower().Contains(searchTerm.ToLower()))
+        .Select(b => new
+        {
+            b.Slug,
+            b.Title,
+            b.Excerpt,
+            b.Date
+        })
+        .ToList();
+
+    return blogs;
+});
+
+// Basic search using LIKE/Contains
+app.MapGet("/blogs/full-text", (string searchTerm, BlogsDbContext context) =>
+{
+    var blogs = context.BlogPosts
+        .Where(b =>
+            EF.Functions.ToTsVector("english", b.Title + " " + b.Excerpt + " " + b.Content).Matches(EF.Functions.PhraseToTsQuery("english", searchTerm)))
         .Select(b => new
         {
             b.Slug,

@@ -39,6 +39,13 @@ namespace FullTextSearchDemo.Services
             if (string.IsNullOrWhiteSpace(searchTerm))
                 return await GetAllBlogsAsync();
 
+            // Basic search using LIKE/Contains
+            return await BasicSearchAsync(searchTerm);
+        }
+        
+        // Basic search using LIKE/Contains (case-insensitive)
+        private async Task<IEnumerable<BlogPost>> BasicSearchAsync(string searchTerm)
+        {
             searchTerm = searchTerm.ToLower();
             
             return await _context.BlogPosts
@@ -47,6 +54,48 @@ namespace FullTextSearchDemo.Services
                     b.Excerpt.ToLower().Contains(searchTerm) || 
                     b.Content.ToLower().Contains(searchTerm))
                 .ToListAsync();
+        }
+        
+        // Full-text search using PostgreSQL's tsvector and tsquery
+        public async Task<IEnumerable<BlogPost>> FullTextSearchAsync(string searchTerm)
+        {
+            if (string.IsNullOrWhiteSpace(searchTerm))
+                return await GetAllBlogsAsync();
+                
+            // Format the search term for tsquery
+            // Replace spaces with & for AND operations
+            string formattedSearchTerm = string.Join(" & ", searchTerm.Split(' ', StringSplitOptions.RemoveEmptyEntries));
+            
+            // Execute raw SQL query using PostgreSQL's full-text search capabilities
+            return await _context.BlogPosts
+                .FromSqlRaw(
+                    @"SELECT * FROM ""BlogPosts"" 
+                      WHERE to_tsvector('english', ""Title"" || ' ' || ""Excerpt"" || ' ' || ""Content"") @@ to_tsquery('english', {0})",
+                    formattedSearchTerm)
+                .ToListAsync();
+        }
+        
+        // Full-text search with ranking using PostgreSQL's ts_rank
+        public async Task<IEnumerable<BlogPost>> RankedFullTextSearchAsync(string searchTerm)
+        {
+            if (string.IsNullOrWhiteSpace(searchTerm))
+                return await GetAllBlogsAsync();
+                
+            // Format the search term for tsquery
+            string formattedSearchTerm = string.Join(" & ", searchTerm.Split(' ', StringSplitOptions.RemoveEmptyEntries));
+            
+            // Execute raw SQL query with ranking
+            var result = await _context.BlogPosts
+                .FromSqlRaw(
+                    @"SELECT *, 
+                      ts_rank(to_tsvector('english', ""Title"" || ' ' || ""Excerpt"" || ' ' || ""Content""), to_tsquery('english', {0})) AS rank 
+                      FROM ""BlogPosts"" 
+                      WHERE to_tsvector('english', ""Title"" || ' ' || ""Excerpt"" || ' ' || ""Content"") @@ to_tsquery('english', {0}) 
+                      ORDER BY rank DESC",
+                    formattedSearchTerm)
+                .ToListAsync();
+                
+            return result;
         }
 
         public async Task SeedBlogsAsync()
