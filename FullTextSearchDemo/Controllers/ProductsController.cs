@@ -1,4 +1,4 @@
-using FullTextSearchDemo.Models;
+using FullTextSearchDemo.Database;
 using FullTextSearchDemo.Services;
 using Microsoft.AspNetCore.Mvc;
 using FullTextSearchDemo.Data;

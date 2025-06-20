@@ -1,7 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace FullTextSearchDemo.Models
+namespace FullTextSearchDemo.Database
 {
     public class BlogPost
     {

@@ -1,5 +1,5 @@
 using FullTextSearchDemo.Data;
-using FullTextSearchDemo.Models;
+using FullTextSearchDemo.Database;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;

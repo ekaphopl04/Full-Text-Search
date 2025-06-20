@@ -22,7 +22,7 @@ namespace FullTextSearchDemo.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("FullTextSearchDemo.Models.Product", b =>
+            modelBuilder.Entity("FullTextSearchDemo.Database.Product", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()

@@ -1,5 +1,5 @@
 using FullTextSearchDemo.Data;
-using FullTextSearchDemo.Models;
+using FullTextSearchDemo.Database;
 using FullTextSearchDemo.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;

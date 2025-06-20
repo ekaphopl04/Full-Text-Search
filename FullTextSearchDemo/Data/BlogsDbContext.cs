@@ -1,4 +1,4 @@
-using FullTextSearchDemo.Models;
+using FullTextSearchDemo.Database;
 using Microsoft.EntityFrameworkCore;
 
 namespace FullTextSearchDemo.Data
