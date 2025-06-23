@@ -102,8 +102,30 @@ namespace FullTextSearchDemo.Controllers
         }
 
         // Full-text search with ranking
-        [HttpGet("vector/full-text/ranking")]
+        [HttpGet("full-text/ranking")]
         public IActionResult SearchFullTextWithRanking([FromQuery] string searchTerm)
+        {
+            var blogs = _context.BlogPosts
+                .Where(b =>
+                    EF.Functions.ToTsVector("english", b.Title + " " + b.Excerpt + " " + b.Content)
+                    .Matches(EF.Functions.PhraseToTsQuery("english", searchTerm)))
+                .Select(b => new
+                {
+                    b.Slug,
+                    b.Title,
+                    b.Excerpt,
+                    b.Date,
+                    Rank = EF.Functions.ToTsVector("english", b.Title + " " + b.Excerpt + " " + b.Content).Rank(EF.Functions.PhraseToTsQuery("english", searchTerm))
+                })
+                .OrderByDescending(b => b.Rank)
+                .ToList();
+
+            return Ok(blogs);
+        }
+
+        // Full-text search with ranking
+        [HttpGet("vector/full-text/ranking")]
+        public IActionResult SearchFullVectorTextWithRanking([FromQuery] string searchTerm)
         {
             var blogs = _context.BlogPostVectors
                 .Where(b =>
