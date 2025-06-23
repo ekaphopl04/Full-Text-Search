@@ -15,13 +15,47 @@
                     console.error('Error fetching blogs:', error);
                 });
 
-            // Client-side validation
+            // Client-side validation and API call handling
             document.querySelector('form').addEventListener('submit', function (e) {
+                e.preventDefault(); // Prevent the default form submission
+                
                 const searchTerm = document.querySelector('input[name="searchTerm"]').value;
                 if (!searchTerm.trim()) {
-                    e.preventDefault();
                     alert('Please enter a search term');
+                    return;
                 }
+                
+                const searchType = document.querySelector('input[name="searchType"]:checked').value;
+                
+                // Determine which API endpoint to call based on the search type
+                let apiUrl = '';
+                if (searchType === 'basic') {
+                    apiUrl = `/api/blogs/contains/normalized?searchTerm=${encodeURIComponent(searchTerm)}`;
+                } else if (searchType === 'fulltext') {
+                    apiUrl = `/api/blogs/full-text/ranking?searchTerm=${encodeURIComponent(searchTerm)}`;
+                }
+                
+                // Show loading state
+                const resultsContainer = document.getElementById('allBlogsContainer');
+                resultsContainer.innerHTML = `
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Searching for "${searchTerm}"...</p>
+                    </div>
+                `;
+                
+                // Call the API
+                fetch(apiUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        displaySearchResults(data, searchTerm);
+                    })
+                    .catch(error => {
+                        console.error('Error searching blogs:', error);
+                        resultsContainer.innerHTML = `<div class="alert alert-danger">Error searching blogs: ${error.message}</div>`;
+                    });
             });
         });
 
@@ -65,6 +99,51 @@
 
             resultsContainer.innerHTML = html;
         }
+        
+        function displaySearchResults(blogs, searchTerm) {
+            const resultsContainer = document.getElementById('allBlogsContainer');
+
+            if (!blogs || blogs.length === 0) {
+                resultsContainer.innerHTML = `<div class="alert alert-info">No results found for "${searchTerm}"</div>`;
+                return;
+            }
+
+            let html = '';
+            html += `
+                <h3>Search Results for "${searchTerm}"</h3>
+                <p>Found ${blogs.length} result(s)</p>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Slug</th>
+                            <th scope="col">Date</th>
+                            <th scope="col">Title</th>
+                            <th scope="col">Excerpt</th>
+                            ${blogs[0].hasOwnProperty('rank') ? '<th scope="col">Relevance Score</th>' : ''}
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            blogs.forEach(blog => {
+                html += `
+                    <tr>
+                        <td>${blog.slug}</td>
+                        <td>${blog.date}</td>
+                        <td>${blog.title}</td>
+                        <td>${blog.excerpt}</td>
+                        ${blog.hasOwnProperty('rank') ? `<td>${blog.rank.toFixed(2)}</td>` : ''}
+                    </tr>
+                `;
+            });
+            
+            html += `
+                    </tbody>
+                </table>
+            `;
+
+            resultsContainer.innerHTML = html;
+        }
     </script>
 }
 
@@ -74,7 +153,7 @@
             <div class="search-container">
                 <h1 class="mb-4">Search Articles</h1>
 
-                <form method="post" action="@Url.Action("SearchResults", "Home")" class="mb-4">
+                <form class="mb-4">
                     <div class="search-box mb-3">
                         <input type="text" class="form-control" name="searchTerm" placeholder="Search articles..."
                             required>
