@@ -28,7 +28,7 @@
 
                 @if (results != null && results.Count > 0)
                 {
-                    <p class="results-count">Showing @results.Count results:</p>
+                    <p class="results-count">Showing @(results?.Count ?? 0) results:</p>
 
                     <div class="results-container">
                         @{
@@ -82,8 +82,8 @@
                                     </div>
                                     <div class="col-md-9">
                                         <p class="result-date">@(blog.Date != null ? blog.Date.ToString("MMMM d, yyyy").ToUpper() : DateTime.Now.ToString("MMMM d, yyyy").ToUpper())</p>
-                                        <h3 class="result-title">@blog.Title</h3>
-                                        <p class="result-excerpt">@blog.Excerpt</p>
+                                        <h3 class="result-title">@(blog.Title ?? "Untitled")</h3>
+                                        <p class="result-excerpt">@(blog.Excerpt ?? "No excerpt available")</p>
                                         <div class="relevance-badge">
                                             Relevance: <span class="relevance-score">@relevanceDisplay</span>
                                         </div>
