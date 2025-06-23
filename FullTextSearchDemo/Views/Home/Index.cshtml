@@ -2,33 +2,49 @@
     ViewData["Title"] = "Home";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome to Full Text Search Demo</h1>
-    <p>This application demonstrates different search techniques using ASP.NET Core MVC and PostgreSQL.</p>
-    
-    <div class="mt-5">
-        <a href="@Url.Action("Search", "Home")" class="btn btn-primary btn-lg">Go to Search</a>
-    </div>
-</div>
-
-<div class="row mt-5">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h5>Basic Search</h5>
-            </div>
-            <div class="card-body">
-                <p>Simple text search using LIKE/Contains operators.</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h5>Full-Text Search</h5>
-            </div>
-            <div class="card-body">
-                <p>Advanced search using PostgreSQL's full-text search capabilities.</p>
+<div class="container mt-4 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="search-container text-center">
+                <h1 class="display-4 mb-4">Full Text Search Demo</h1>
+                <p class="lead mb-5">This application demonstrates different search techniques using ASP.NET Core MVC and PostgreSQL.</p>
+                
+                <div class="search-box mb-5">
+                    <form method="post" action="@Url.Action("SearchResults", "Home")">
+                        <input type="text" class="form-control" name="searchTerm" placeholder="Search articles..." required>
+                        <input type="hidden" name="searchType" value="fulltext">
+                        <button class="btn btn-search" type="submit">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </form>
+                </div>
+                
+                <div class="row mt-5">
+                    <div class="col-md-6 mb-4">
+                        <div class="search-result-card h-100">
+                            <div class="text-center mb-3">
+                                <i class="bi bi-search" style="font-size: 2rem; color: var(--primary-color);"></i>
+                            </div>
+                            <h4>Basic Search</h4>
+                            <p>Simple text search using LIKE/Contains operators. Good for small datasets and exact matches.</p>
+                            <div class="mt-3">
+                                <a href="@Url.Action("Search", "Home")" class="btn btn-outline-primary btn-sm">Try Basic Search</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="search-result-card h-100">
+                            <div class="text-center mb-3">
+                                <i class="bi bi-search-heart" style="font-size: 2rem; color: var(--primary-color);"></i>
+                            </div>
+                            <h4>Full-Text Search</h4>
+                            <p>Advanced search using PostgreSQL's full-text search capabilities with relevance ranking.</p>
+                            <div class="mt-3">
+                                <a href="@Url.Action("Search", "Home")" class="btn btn-outline-primary btn-sm">Try Full-Text Search</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

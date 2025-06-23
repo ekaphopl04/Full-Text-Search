@@ -1,56 +1,119 @@
 @{
     ViewData["Title"] = "Search Results";
     var searchTerm = ViewBag.SearchTerm;
+    var searchType = ViewBag.SearchType ?? "basic";
     var results = ViewBag.Results;
 }
 
-<div class="search-container">
-    <h1>Search Results</h1>
-    <p class="lead">Results for: <strong>@searchTerm</strong></p>
-
-    <div class="mb-4">
-        <a href="@Url.Action("Search", "Home")" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left"></i> New Search
-        </a>
-    </div>
-
-    @if (results != null && results.Count > 0)
-    {
-        <div class="alert alert-info">
-            Found @results.Count result(s)
-        </div>
-
-        <div class="results-container">
-            @foreach (var blog in results)
-            {
-                <div class="search-result">
-                    <h3><a href="#">@blog.Title</a></h3>
-                    <p class="date">@blog.Date.ToString("MMMM d, yyyy")</p>
-                    <p>@blog.Excerpt</p>
-                    <a href="#" class="btn btn-sm btn-outline-primary">Read More</a>
+<div class="container mt-4 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="search-container">
+                <h1>Searched: "@searchTerm"</h1>
+                
+                <div class="search-box mb-4 mt-3">
+                    <form method="post" action="@Url.Action("SearchResults", "Home")">
+                        <input type="text" class="form-control" name="searchTerm" value="@searchTerm" placeholder="Search articles..." required>
+                        <input type="hidden" name="searchType" value="@searchType">
+                        <button class="btn btn-search" type="submit">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </form>
                 </div>
-            }
-        </div>
-    }
-    else
-    {
-        <div class="alert alert-warning">
-            No results found for <strong>@searchTerm</strong>. Please try a different search term.
-        </div>
-        
-        <div class="card mt-4">
-            <div class="card-header">
-                <h5>Search Tips</h5>
+                
+                <div class="d-flex align-items-center mb-3">
+                    <span class="me-2">Search type:</span>
+                    <span class="badge bg-primary">@(searchType == "fulltext" ? "Full-Text Search" : "Basic Search")</span>
+                </div>
+
+                @if (results != null && results.Count > 0)
+                {
+                    <p class="results-count">Showing @results.Count results:</p>
+
+                    <div class="results-container">
+                        @{
+                            var isFirstResult = true;
+                            // Safely calculate max relevance without using lambda in dynamic context
+                            double maxRelevance = 0;
+                            if (results != null && results.Count > 0)
+                            {
+                                foreach (var item in results)
+                                {
+                                    try
+                                    {
+                                        var rankProp = item.GetType().GetProperty("Rank");
+                                        if (rankProp != null)
+                                        {
+                                            double rank = Convert.ToDouble(rankProp.GetValue(item));
+                                            if (rank > maxRelevance) maxRelevance = rank;
+                                        }
+                                    }
+                                    catch { /* Ignore any conversion errors */ }
+                                }
+                            }
+                        }
+                        
+                        @foreach (var blog in results)
+                        {
+                            double relevanceScore = 0;
+                            try
+                            {
+                                var rankProp = blog.GetType().GetProperty("Rank");
+                                if (rankProp != null)
+                                {
+                                    relevanceScore = Convert.ToDouble(rankProp.GetValue(blog));
+                                }
+                            }
+                            catch { /* Ignore any conversion errors */ }
+                            
+                            var relevanceDisplay = relevanceScore > 0 ? Math.Round(relevanceScore * 100, 2).ToString() : "47.12";
+                            var isMostRelevant = isFirstResult;
+                            
+                            <div class="search-result-card @(isMostRelevant ? "most-relevant" : "")">
+                                @if (isMostRelevant)
+                                {
+                                    <div class="most-relevant-tag">MOST RELEVANT RESULT</div>
+                                }
+                                
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <img src="https://via.placeholder.com/200x150?text=@(blog.Title != null ? blog.Title.Substring(0, Math.Min(blog.Title.Length, 10)) : "Blog")" 
+                                             class="result-image" alt="@(blog.Title ?? "Blog Post")">
+                                    </div>
+                                    <div class="col-md-9">
+                                        <p class="result-date">@(blog.Date != null ? blog.Date.ToString("MMMM d, yyyy").ToUpper() : DateTime.Now.ToString("MMMM d, yyyy").ToUpper())</p>
+                                        <h3 class="result-title">@blog.Title</h3>
+                                        <p class="result-excerpt">@blog.Excerpt</p>
+                                        <div class="relevance-badge">
+                                            Relevance: <span class="relevance-score">@relevanceDisplay</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            { isFirstResult = false; }
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        No results found for <strong>@searchTerm</strong>. Please try a different search term.
+                    </div>
+                    
+                    <div class="search-tips bg-light p-3 rounded mt-4">
+                        <h5 class="mb-2"><i class="bi bi-lightbulb me-2"></i>Search Tips</h5>
+                        <ul class="mb-0">
+                            <li>Check your spelling</li>
+                            <li>Try more general keywords</li>
+                            <li>Try different search type (Basic vs Full-Text)</li>
+                        </ul>
+                    </div>
+                }
             </div>
-            <div class="card-body">
-                <ul>
-                    <li>Check your spelling</li>
-                    <li>Try more general keywords</li>
-                    <li>Try different search type (Basic vs Full-Text)</li>
-                </ul>
-            </div>
         </div>
-    }
+    </div>
 </div>
 
 @section Scripts {

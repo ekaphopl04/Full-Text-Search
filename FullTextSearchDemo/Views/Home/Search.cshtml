@@ -2,46 +2,49 @@
     ViewData["Title"] = "Search";
 }
 
-<div class="search-container">
-    <h1>Search Blogs</h1>
-    <p class="lead">Enter a search term to find relevant blog posts</p>
-
-    <form method="post" action="@Url.Action("SearchResults", "Home")" class="my-4">
-        <div class="input-group mb-3">
-            <input type="text" class="form-control form-control-lg" name="searchTerm" placeholder="Enter search term..." required>
-            <button class="btn btn-primary" type="submit">Search</button>
-        </div>
-        
-        <div class="form-group mt-3">
-            <label class="form-label">Search Type:</label>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="searchType" id="basicSearch" value="basic" checked>
-                <label class="form-check-label" for="basicSearch">
-                    Basic Search (LIKE/Contains)
-                </label>
+<div class="container mt-4 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="search-container">
+                <h1 class="mb-4">Search Articles</h1>
+                
+                <form method="post" action="@Url.Action("SearchResults", "Home")" class="mb-4">
+                    <div class="search-box mb-3">
+                        <input type="text" class="form-control" name="searchTerm" placeholder="Search articles..." required>
+                        <button class="btn btn-search" type="submit">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="searchType" id="basicSearch" value="basic" checked>
+                            <label class="form-check-label" for="basicSearch">
+                                Basic Search
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="searchType" id="fullTextSearch" value="fulltext">
+                            <label class="form-check-label" for="fullTextSearch">
+                                Full-Text Search
+                            </label>
+                        </div>
+                    </div>
+                </form>
+                
+                <div class="search-tips bg-light p-3 rounded">
+                    <h5 class="mb-2"><i class="bi bi-lightbulb me-2"></i>Search Tips</h5>
+                    <ul class="mb-0">
+                        <li>Use specific keywords for better results</li>
+                        <li>Try both search types to compare results</li>
+                        <li>Full-text search works better with natural language queries</li>
+                    </ul>
+                </div>
             </div>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="searchType" id="fullTextSearch" value="fulltext">
-                <label class="form-check-label" for="fullTextSearch">
-                    Full-Text Search
-                </label>
-            </div>
-        </div>
-    </form>
-    
-    <div class="card mt-4">
-        <div class="card-header">
-            <h5>Search Tips</h5>
-        </div>
-        <div class="card-body">
-            <ul>
-                <li>Use specific keywords for better results</li>
-                <li>Try both search types to compare results</li>
-                <li>Full-text search works better with natural language queries</li>
-            </ul>
         </div>
     </div>
 </div>
+
 
 @section Scripts {
 <script>
