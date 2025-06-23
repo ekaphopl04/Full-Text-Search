@@ -31,68 +31,62 @@
                     <p class="results-count">Showing @(results?.Count ?? 0) results:</p>
 
                     <div class="results-container">
-                        @{
-                            var isFirstResult = true;
-                            // Safely calculate max relevance without using lambda in dynamic context
-                            double maxRelevance = 0;
-                            if (results != null && results.Count > 0)
-                            {
-                                foreach (var item in results)
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Title</th>
+                                    <th>Excerpt</th>
+                                    @if (searchType == "fulltext")
+                                    {
+                                        <th>Relevance</th>
+                                    }
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    var isFirstResult = true;
+                                }
+                                
+                                @foreach (var blog in results)
                                 {
+                                    double relevanceScore = 0;
                                     try
                                     {
-                                        var rankProp = item.GetType().GetProperty("Rank");
+                                        var rankProp = blog.GetType().GetProperty("Rank");
                                         if (rankProp != null)
                                         {
-                                            double rank = Convert.ToDouble(rankProp.GetValue(item));
-                                            if (rank > maxRelevance) maxRelevance = rank;
+                                            relevanceScore = Convert.ToDouble(rankProp.GetValue(blog));
                                         }
                                     }
                                     catch { /* Ignore any conversion errors */ }
+                                    
+                                    var relevanceDisplay = relevanceScore > 0 ? Math.Round(relevanceScore * 100, 2).ToString() : "";
+                                    var isMostRelevant = isFirstResult;
+                                    
+                                    <tr class="@(isMostRelevant && searchType == "fulltext" ? "table-primary" : "")">
+                                        <td>@(blog.Date != null ? blog.Date.ToString("yyyy-MM-dd") : "No date")</td>
+                                        <td>@(blog.Title ?? "Untitled")</td>
+                                        <td>@(blog.Excerpt ?? "No excerpt available")</td>
+                                        @if (searchType == "fulltext")
+                                        {
+                                            <td>
+                                                @if (isMostRelevant)
+                                                {
+                                                    <span class="badge bg-primary">MOST RELEVANT</span>
+                                                }
+                                                else
+                                                {
+                                                    @relevanceDisplay
+                                                }
+                                            </td>
+                                        }
+                                    </tr>
+                                    
+                                    { isFirstResult = false; }
                                 }
-                            }
-                        }
-                        
-                        @foreach (var blog in results)
-                        {
-                            double relevanceScore = 0;
-                            try
-                            {
-                                var rankProp = blog.GetType().GetProperty("Rank");
-                                if (rankProp != null)
-                                {
-                                    relevanceScore = Convert.ToDouble(rankProp.GetValue(blog));
-                                }
-                            }
-                            catch { /* Ignore any conversion errors */ }
-                            
-                            var relevanceDisplay = relevanceScore > 0 ? Math.Round(relevanceScore * 100, 2).ToString() : "47.12";
-                            var isMostRelevant = isFirstResult;
-                            
-                            <div class="search-result-card @(isMostRelevant ? "most-relevant" : "") position-relative">
-                                @if (isMostRelevant)
-                                {
-                                    <div class="most-relevant-tag">MOST RELEVANT RESULT</div>
-                                }
-                                
-                                <div class="row">
-                                    <div class="col-md-3">
-                                        <img src="https://via.placeholder.com/200x150?text=@(blog.Title != null ? blog.Title.Substring(0, Math.Min(blog.Title.Length, 10)) : "Blog")" 
-                                             class="result-image" alt="@(blog.Title ?? "Blog Post")">
-                                    </div>
-                                    <div class="col-md-9">
-                                        <p class="result-date">@(blog.Date != null ? blog.Date.ToString("MMMM d, yyyy").ToUpper() : DateTime.Now.ToString("MMMM d, yyyy").ToUpper())</p>
-                                        <h3 class="result-title">@(blog.Title ?? "Untitled")</h3>
-                                        <p class="result-excerpt">@(blog.Excerpt ?? "No excerpt available")</p>
-                                        <div class="relevance-badge">
-                                            Relevance: <span class="relevance-score">@relevanceDisplay</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            { isFirstResult = false; }
-                        }
+                            </tbody>
+                        </table>
                     </div>
                 }
                 else

@@ -2,36 +2,101 @@
     ViewData["Title"] = "Search";
 }
 
+@section Scripts {
+    <script>
+        // Call the GetBlogs API endpoint when the page loads
+        document.addEventListener('DOMContentLoaded', function () {
+            fetch('/api/blogs')
+                .then(response => response.json())
+                .then(data => {
+                    displayBlogs(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching blogs:', error);
+                });
+
+            // Client-side validation
+            document.querySelector('form').addEventListener('submit', function (e) {
+                const searchTerm = document.querySelector('input[name="searchTerm"]').value;
+                if (!searchTerm.trim()) {
+                    e.preventDefault();
+                    alert('Please enter a search term');
+                }
+            });
+        });
+
+        function displayBlogs(blogs) {
+            const resultsContainer = document.getElementById('allBlogsContainer');
+
+            if (!blogs || blogs.length === 0) {
+                resultsContainer.innerHTML = '<div class="alert alert-info">No blogs found</div>';
+                return;
+            }
+
+            let html = '';
+            html += `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Date</th>
+                            <th scope="col">Title</th>
+                            <th scope="col">Excerpt</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            blogs.forEach(blog => {
+                html += `
+                    <tr>
+                        <td>${blog.date}</td>
+                        <td>${blog.title}</td>
+                        <td>${blog.excerpt}</td>
+                    </tr>
+                `;
+            });
+            html += `
+                    </tbody>
+                </table>
+            `;
+
+            resultsContainer.innerHTML = html;
+        }
+    </script>
+}
+
 <div class="container mt-4 mb-5">
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="search-container">
                 <h1 class="mb-4">Search Articles</h1>
-                
+
                 <form method="post" action="@Url.Action("SearchResults", "Home")" class="mb-4">
                     <div class="search-box mb-3">
-                        <input type="text" class="form-control" name="searchTerm" placeholder="Search articles..." required>
+                        <input type="text" class="form-control" name="searchTerm" placeholder="Search articles..."
+                            required>
                         <button class="btn btn-search" type="submit">
                             <i class="bi bi-search"></i>
                         </button>
                     </div>
-                    
+
                     <div class="d-flex justify-content-between align-items-center">
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="searchType" id="basicSearch" value="basic" checked>
+                            <input class="form-check-input" type="radio" name="searchType" id="basicSearch"
+                                value="basic" checked>
                             <label class="form-check-label" for="basicSearch">
                                 Basic Search
                             </label>
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="searchType" id="fullTextSearch" value="fulltext">
+                            <input class="form-check-input" type="radio" name="searchType" id="fullTextSearch"
+                                value="fulltext">
                             <label class="form-check-label" for="fullTextSearch">
                                 Full-Text Search
                             </label>
                         </div>
                     </div>
                 </form>
-                
+
                 <div class="search-tips bg-light p-3 rounded">
                     <h5 class="mb-2"><i class="bi bi-lightbulb me-2"></i>Search Tips</h5>
                     <ul class="mb-0">
@@ -40,21 +105,21 @@
                         <li>Full-text search works better with natural language queries</li>
                     </ul>
                 </div>
+
+                <div class="mt-5">
+                    <h2 class="mb-4">All Articles</h2>
+                    <div id="allBlogsContainer" class="results-container">
+                        <!-- Blog posts will be loaded here via JavaScript -->
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading articles...</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-
-@section Scripts {
-<script>
-    // Client-side validation
-    document.querySelector('form').addEventListener('submit', function(e) {
-        const searchTerm = document.querySelector('input[name="searchTerm"]').value;
-        if (!searchTerm.trim()) {
-            e.preventDefault();
-            alert('Please enter a search term');
-        }
-    });
-</script>
-}
