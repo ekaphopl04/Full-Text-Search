@@ -1,0 +1,74 @@
+@{
+    ViewData["Title"] = "Search Results";
+    var searchTerm = ViewBag.SearchTerm;
+    var results = ViewBag.Results;
+}
+
+<div class="search-container">
+    <h1>Search Results</h1>
+    <p class="lead">Results for: <strong>@searchTerm</strong></p>
+
+    <div class="mb-4">
+        <a href="@Url.Action("Search", "Home")" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> New Search
+        </a>
+    </div>
+
+    @if (results != null && results.Count > 0)
+    {
+        <div class="alert alert-info">
+            Found @results.Count result(s)
+        </div>
+
+        <div class="results-container">
+            @foreach (var blog in results)
+            {
+                <div class="search-result">
+                    <h3><a href="#">@blog.Title</a></h3>
+                    <p class="date">@blog.Date.ToString("MMMM d, yyyy")</p>
+                    <p>@blog.Excerpt</p>
+                    <a href="#" class="btn btn-sm btn-outline-primary">Read More</a>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            No results found for <strong>@searchTerm</strong>. Please try a different search term.
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5>Search Tips</h5>
+            </div>
+            <div class="card-body">
+                <ul>
+                    <li>Check your spelling</li>
+                    <li>Try more general keywords</li>
+                    <li>Try different search type (Basic vs Full-Text)</li>
+                </ul>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+<script>
+    // Highlight search terms in results
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchTerm = '@searchTerm';
+        if (!searchTerm) return;
+        
+        const resultElements = document.querySelectorAll('.search-result p:not(.date)');
+        resultElements.forEach(element => {
+            const content = element.innerHTML;
+            const highlightedContent = content.replace(
+                new RegExp(searchTerm, 'gi'),
+                match => `<mark>${match}</mark>`
+            );
+            element.innerHTML = highlightedContent;
+        });
+    });
+</script>
+}

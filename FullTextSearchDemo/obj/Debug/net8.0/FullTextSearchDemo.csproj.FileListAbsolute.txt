@@ -104,3 +104,5 @@
 /Users/ekaphop/Documents/Full-Text-Search/FullTextSearchDemo/obj/Debug/net8.0/staticwebassets/msbuild.buildTransitive.FullTextSearchDemo.props
 /Users/ekaphop/Documents/Full-Text-Search/FullTextSearchDemo/obj/Debug/net8.0/staticwebassets.pack.json
 /Users/ekaphop/Documents/Full-Text-Search/FullTextSearchDemo/obj/Debug/net8.0/scopedcss/bundle/FullTextSearchDemo.styles.css
+/Users/ekaphop/Documents/Full-Text-Search/FullTextSearchDemo/obj/Debug/net8.0/FullTextSearchDemo.RazorAssemblyInfo.cache
+/Users/ekaphop/Documents/Full-Text-Search/FullTextSearchDemo/obj/Debug/net8.0/FullTextSearchDemo.RazorAssemblyInfo.cs
