@@ -35,29 +35,33 @@
 
             let html = '';
             html += `
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th scope="col">Date</th>
-                            <th scope="col">Title</th>
-                            <th scope="col">Excerpt</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Slug</th>
+                                    <th scope="col">Date</th>
+                                    <th scope="col">Title</th>
+                                    <th scope="col">Content</th>
+                                    <th scope="col">Excerpt</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
             blogs.forEach(blog => {
                 html += `
-                    <tr>
-                        <td>${blog.date}</td>
-                        <td>${blog.title}</td>
-                        <td>${blog.excerpt}</td>
-                    </tr>
-                `;
+                            <tr>
+                             <td>${blog.slug}</td>
+                              <td>${blog.date}</td>
+                               <td>${blog.title}</td>
+                               <td>${blog.content}</td>
+                               <td>${blog.excerpt}</td>
+                            </tr>
+                        `;
             });
             html += `
-                    </tbody>
-                </table>
-            `;
+                            </tbody>
+                        </table>
+                    `;
 
             resultsContainer.innerHTML = html;
         }
@@ -101,7 +105,6 @@
                     <h5 class="mb-2"><i class="bi bi-lightbulb me-2"></i>Search Tips</h5>
                     <ul class="mb-0">
                         <li>Use specific keywords for better results</li>
-                        <li>Try both search types to compare results</li>
                         <li>Full-text search works better with natural language queries</li>
                     </ul>
                 </div>
@@ -122,4 +125,3 @@
         </div>
     </div>
 </div>
-
