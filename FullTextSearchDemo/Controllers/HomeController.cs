@@ -1,7 +1,11 @@
+using FullTextSearchDemo.Data;
 using FullTextSearchDemo.Database;
 using FullTextSearchDemo.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
+using System;
 
 namespace FullTextSearchDemo.Controllers
 {
@@ -34,7 +38,7 @@ namespace FullTextSearchDemo.Controllers
 
             if (string.IsNullOrWhiteSpace(searchTerm))
             {
-                ViewBag.Results = new List<dynamic>();
+                ViewBag.Results = new List<object>();
                 return View();
             }
 
