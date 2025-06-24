@@ -16,7 +16,7 @@ namespace FullTextSearchDemo.Database
             // Create a full-text search index on Title, Excerpt, and Content
             builder.HasIndex(b => new { b.Title, b.Excerpt, b.Content })
             .HasMethod("GIN")
-            .IsTsVectorExpressionIndex("English");
+            .IsTsVectorExpressionIndex("Thai");
         }
     }
 }

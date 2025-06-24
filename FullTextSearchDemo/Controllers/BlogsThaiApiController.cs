@@ -3,6 +3,7 @@ using FullTextSearchDemo.Data;
 using FullTextSearchDemo.Database;
 using Microsoft.EntityFrameworkCore;
 using System.Data.Common;
+using System.Text.RegularExpressions;
 using Npgsql;
 
 namespace FullTextSearchDemo.Controllers
@@ -92,8 +93,8 @@ namespace FullTextSearchDemo.Controllers
         {
             var blogs = _context.BlogPostsThai
                 .Where(b =>
-                    EF.Functions.ToTsVector("thai", b.Title + " " + b.Excerpt + " " + b.Content)
-                    .Matches(EF.Functions.PhraseToTsQuery("thai", searchTerm)))
+                    EF.Functions.ToTsVector("simple", b.Title + " " + b.Excerpt + " " + b.Content)
+                    .Matches(EF.Functions.PhraseToTsQuery("simple", searchTerm)))
                 .Select(b => new
                 {
                     b.Slug,
@@ -113,93 +114,42 @@ namespace FullTextSearchDemo.Controllers
         [HttpGet("full-text/highlight")]
         public IActionResult SearchFullTextHighlight([FromQuery] string searchTerm)
         {
-            // Format the search term for PostgreSQL full-text search
-            var formattedSearchTerm = searchTerm.Replace(" ", " | ");
+            var formattedSearchTerm = searchTerm.Replace(" ", "%").ToLower();
 
-            // Use raw SQL to get highlighting with ts_headline
-            var sql = @"
-                SELECT ""Slug"", ""Title"", ""Content"", ""Excerpt"", ""Date"", ""Position"", ""Page"",
-                       ts_headline('thai', ""Slug"", to_tsquery('thai', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightSlug,
-                       ts_headline('thai', ""Title"", to_tsquery('thai', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightTitle,
-                       ts_headline('thai', ""Content"", to_tsquery('thai', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightContent,
-                       ts_headline('thai', ""Excerpt"", to_tsquery('thai', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightExcerpt
-                FROM (
-                    SELECT ""Slug"", ""Title"", ""Content"", ""Excerpt"", ""Date"", ""Position"", ""Page"",
-                    to_tsvector('thai', ""Slug"" || ' ' || ""Title"" || ' ' || ""Excerpt"" || ' ' || ""Content"" || ' ' || ""Date"") AS SearchVector
-                    FROM ""BlogPostsThai""
-                ) AS BlogPostsThai
-                WHERE SearchVector @@ to_tsquery('thai', @p0)";
-
-            using var connection = _context.Database.GetDbConnection();
-            connection.Open();
-            using var command = connection.CreateCommand();
-            command.CommandText = sql;
-            var parameter = new NpgsqlParameter("@p0", formattedSearchTerm);
-            command.Parameters.Add(parameter);
-
-            var results = new List<object>();
-            using var reader = command.ExecuteReader();
-            while (reader.Read())
-            {
-                results.Add(new
+            // First, get the matching blogs from database
+            var matchingBlogs = _context.BlogPostsThai
+                .Where(b =>
+                   EF.Functions.ILike(b.Slug.ToLower(), $"%{formattedSearchTerm}%") ||
+                    EF.Functions.ILike(b.Title.ToLower(), $"%{formattedSearchTerm}%") ||
+                    EF.Functions.ILike(b.Excerpt.ToLower(), $"%{formattedSearchTerm}%") ||
+                    EF.Functions.ILike(b.Content.ToLower(), $"%{formattedSearchTerm}%"))
+                .Select(b => new
                 {
-                    Slug = reader.GetString(0),           // Slug
-                    Title = reader.GetString(1),          // Title
-                    Content = reader.GetString(2),        // Content
-                    Excerpt = reader.GetString(3),        // Excerpt
-                    Date = reader.GetString(4),           // Date
-                    Position = reader.GetString(5),       // Position
-                    Page = reader.GetString(6),           // Page
-                    HighlightSlug = reader.GetString(7),      // HighlightSlug
-                    HighlightTitle = reader.GetString(8),     // HighlightTitle
-                    HighlightContent = reader.GetString(9),   // HighlightContent
-                    HighlightExcerpt = reader.GetString(10)   // HighlightExcerpt
-                });
-            }
+                    b.Slug,
+                    b.Title,
+                    b.Content,
+                    b.Excerpt,
+                    b.Date,
+                    b.Position,
+                    b.Page
+                })
+                .ToList();
 
-            return Ok(results);
-        }
-
-        // Full-text search with ranking
-        [HttpGet("full-text/ranking")]
-        public IActionResult SearchFullTextWithRanking([FromQuery] string searchTerm)
-        {
-            // Format the search term for PostgreSQL full-text search
-            var formattedSearchTerm = searchTerm.Replace(" ", " | ");
-
-            // Use raw SQL for ranking with ts_rank
-            var sql = @"
-                SELECT ""Slug"", ""Title"", ""Content"", ""Excerpt"", ""Date"", ""Position"", ""Page"",
-                       ts_rank(to_tsvector('thai', ""Title"" || ' ' || ""Excerpt"" || ' ' || ""Content""), to_tsquery('thai', @p0)) AS Rank
-                FROM ""BlogPostsThai""
-                WHERE to_tsvector('thai', ""Title"" || ' ' || ""Excerpt"" || ' ' || ""Content"") @@ to_tsquery('thai', @p0)
-                ORDER BY Rank DESC";
-
-            using var connection = _context.Database.GetDbConnection();
-            connection.Open();
-            using var command = connection.CreateCommand();
-            command.CommandText = sql;
-            var parameter = new NpgsqlParameter("@p0", formattedSearchTerm);
-            command.Parameters.Add(parameter);
-
-            var results = new List<object>();
-            using var reader = command.ExecuteReader();
-            while (reader.Read())
-            {
-                results.Add(new
+            // Then apply highlighting on the client side
+            var blogs = matchingBlogs
+                .Select(b => new
                 {
-                    Slug = reader.GetString(0),       // Slug
-                    Title = reader.GetString(1),      // Title
-                    Content = reader.GetString(2),    // Content
-                    Excerpt = reader.GetString(3),    // Excerpt
-                    Date = reader.GetString(4),       // Date
-                    Position = reader.GetString(5),   // Position
-                    Page = reader.GetString(6),       // Page
-                    Rank = reader.GetDouble(7)        // Rank
-                });
-            }
+                    Slug = Regex.Replace(b.Slug, searchTerm, m => $"<yellow>{m.Value}</yellow>", RegexOptions.IgnoreCase),
+                    Title = Regex.Replace(b.Title, searchTerm, m => $"<yellow>{m.Value}</yellow>", RegexOptions.IgnoreCase),
+                    Content = Regex.Replace(b.Content, searchTerm, m => $"<yellow>{m.Value}</yellow>", RegexOptions.IgnoreCase),
+                    Excerpt = Regex.Replace(b.Excerpt, searchTerm, m => $"<yellow>{m.Value}</yellow>", RegexOptions.IgnoreCase),
+                    b.Date,
+                    b.Position,
+                    b.Page
+                })
+                .ToList();
 
-            return Ok(results);
+            return Ok(blogs);
         }
     }
 }
