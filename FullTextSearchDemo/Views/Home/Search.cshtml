@@ -30,10 +30,10 @@
                 // Determine which API endpoint to call based on the search type
                 let apiUrl = '';
                 if (searchType === 'basic') {
-                    apiUrl = `/api/blogs/contains/normalized?searchTerm=${encodeURIComponent(searchTerm)}`;
+                    apiUrl = `/api/blogs/full-text/highlight?searchTerm=${encodeURIComponent(searchTerm)}`;
                 } else if (searchType === 'fulltext') {
                     apiUrl = `/api/blogs/full-text/ranking?searchTerm=${encodeURIComponent(searchTerm)}`;
-                }
+                } 
                 
                 // Show loading state
                 const resultsContainer = document.getElementById('allBlogsContainer');
@@ -121,6 +121,7 @@
                             <th scope="col">Content</th>
                             <th scope="col">Excerpt</th>
                             ${blogs[0].hasOwnProperty('rank') ? '<th scope="col">Relevance Score</th>' : ''}
+                            ${blogs[0].hasOwnProperty('highlight') ? '<th scope="col">Highlighted Content</th>' : ''}
                         </tr>
                     </thead>
                     <tbody>
@@ -129,12 +130,13 @@
             blogs.forEach(blog => {
                 html += `
                     <tr>
-                        <td>${blog.slug}</td>
+                        <td>${blog.highlightSlug}</td>
                         <td>${blog.date}</td>
-                        <td>${blog.title}</td>
-                        <td>${blog.content}</td>
-                        <td>${blog.excerpt}</td>
+                        <td>${blog.highlightTitle}</td>
+                        <td>${blog.highlightContent}</td>
+                        <td>${blog.highlightExcerpt}</td>
                         ${blog.hasOwnProperty('rank') ? `<td>${blog.rank.toFixed(2)}</td>` : ''}
+                        ${blog.hasOwnProperty('highlight') ? `<td>${blog.highlight}</td>` : ''}
                     </tr>
                 `;
             });
@@ -179,6 +181,13 @@
                                 Full-Text Search
                             </label>
                         </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="searchType" id="fullTextHighlight"
+                                value="fulltext-highlight">
+                            <label class="form-check-label" for="fullTextHighlight">
+                                Highlighted Search
+                            </label>
+                        </div>
                     </div>
                 </form>
 
@@ -187,6 +196,7 @@
                     <ul class="mb-0">
                         <li>Use specific keywords for better results</li>
                         <li>Full-text search works better with natural language queries</li>
+                        <li>Try the highlighted search to see where your terms appear</li>
                     </ul>
                 </div>
 

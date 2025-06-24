@@ -3,7 +3,8 @@ using FullTextSearchDemo.Data;
 using FullTextSearchDemo.Database;
 using FullTextSearchDemo.Services;
 using Microsoft.EntityFrameworkCore;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Query.Expressions.Internal;
+using System.Data.Common;
+using Npgsql;
 
 namespace FullTextSearchDemo.Controllers
 {
@@ -102,6 +103,54 @@ namespace FullTextSearchDemo.Controllers
                 .ToList();
 
             return Ok(blogs);
+        }
+        // Full-text search with headline highlighting
+        [HttpGet("full-text/highlight")]
+        public IActionResult SearchFullTextHighlight([FromQuery] string searchTerm)
+        {
+            // Format the search term for PostgreSQL full-text search
+            var formattedSearchTerm = searchTerm.Replace(" ", " | ");
+            
+            // Use raw SQL to get highlighting with ts_headline
+            var sql = @"
+                SELECT ""Slug"", ""Title"", ""Content"", ""Excerpt"", ""Date"",
+                       ts_headline('english', ""Slug"", to_tsquery('english', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true') AS HighlightSlug,
+                       ts_headline('english', ""Title"", to_tsquery('english', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true') AS HighlightTitle,
+                       ts_headline('english', ""Content"", to_tsquery('english', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true') AS HighlightContent,
+                       ts_headline('english', ""Excerpt"", to_tsquery('english', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true') AS HighlightExcerpt
+                FROM (
+                    SELECT ""Slug"", ""Title"", ""Content"", ""Excerpt"", ""Date"",
+                    to_tsvector('english', ""Slug"" || ' ' || ""Title"" || ' ' || ""Excerpt"" || ' ' || ""Content"" || ' ' || ""Date"") AS SearchVector
+                    FROM ""BlogPosts""
+                ) AS BlogPosts
+                WHERE SearchVector @@ to_tsquery('english', @p0)";
+
+            using var connection = _context.Database.GetDbConnection();
+            connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = sql;
+            var parameter = new NpgsqlParameter("@p0", formattedSearchTerm);
+            command.Parameters.Add(parameter);
+            
+            var results = new List<object>();
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                results.Add(new
+                {
+                    Slug = reader.GetString(0),       // Slug
+                    Title = reader.GetString(1),      // Title
+                    Content = reader.GetString(2),    // Content
+                    Excerpt = reader.GetString(3),    // Excerpt
+                    Date = reader.GetString(4),       // Date
+                    HighlightSlug = reader.GetString(5),   // HighlightSlug
+                    HighlightTitle = reader.GetString(6),   // HighlightTitle
+                    HighlightContent = reader.GetString(7), // HighlightContent
+                    HighlightExcerpt = reader.GetString(8)  // HighlightExcerpt
+                });
+            }
+
+            return Ok(results);
         }
 
         // Full-text search with ranking
