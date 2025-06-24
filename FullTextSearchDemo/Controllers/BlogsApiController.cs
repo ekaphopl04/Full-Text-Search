@@ -52,6 +52,7 @@ namespace FullTextSearchDemo.Controllers
                 {
                     b.Slug,
                     b.Title,
+                    b.Content,
                     b.Excerpt,
                     b.Date
                 })
@@ -73,6 +74,7 @@ namespace FullTextSearchDemo.Controllers
                 {
                     b.Slug,
                     b.Title,
+                    b.Content,
                     b.Excerpt,
                     b.Date
                 })
@@ -93,6 +95,7 @@ namespace FullTextSearchDemo.Controllers
                 {
                     b.Slug,
                     b.Title,
+                    b.Content,
                     b.Excerpt,
                     b.Date
                 })
@@ -113,6 +116,7 @@ namespace FullTextSearchDemo.Controllers
                 {
                     b.Slug,
                     b.Title,
+                    b.Content,
                     b.Excerpt,
                     b.Date,
                     Rank = EF.Functions.ToTsVector("english", b.Title + " " + b.Excerpt + " " + b.Content).Rank(EF.Functions.PhraseToTsQuery("english", searchTerm))
@@ -134,6 +138,7 @@ namespace FullTextSearchDemo.Controllers
                 {
                     b.Slug,
                     b.Title,
+                    b.Content,
                     b.Excerpt,
                     b.Date,
                     Rank = b.SearchVector.Rank(EF.Functions.PhraseToTsQuery("english", searchTerm))

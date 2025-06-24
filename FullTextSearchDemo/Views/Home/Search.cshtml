@@ -118,6 +118,7 @@
                             <th scope="col">Slug</th>
                             <th scope="col">Date</th>
                             <th scope="col">Title</th>
+                            <th scope="col">Content</th>
                             <th scope="col">Excerpt</th>
                             ${blogs[0].hasOwnProperty('rank') ? '<th scope="col">Relevance Score</th>' : ''}
                         </tr>
@@ -131,6 +132,7 @@
                         <td>${blog.slug}</td>
                         <td>${blog.date}</td>
                         <td>${blog.title}</td>
+                        <td>${blog.content}</td>
                         <td>${blog.excerpt}</td>
                         ${blog.hasOwnProperty('rank') ? `<td>${blog.rank.toFixed(2)}</td>` : ''}
                     </tr>
