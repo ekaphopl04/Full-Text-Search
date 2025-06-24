@@ -110,14 +110,14 @@ namespace FullTextSearchDemo.Controllers
         {
             // Format the search term for PostgreSQL full-text search
             var formattedSearchTerm = searchTerm.Replace(" ", " | ");
-            
+
             // Use raw SQL to get highlighting with ts_headline
             var sql = @"
                 SELECT ""Slug"", ""Title"", ""Content"", ""Excerpt"", ""Date"",
-                       ts_headline('english', ""Slug"", to_tsquery('english', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true') AS HighlightSlug,
-                       ts_headline('english', ""Title"", to_tsquery('english', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true') AS HighlightTitle,
-                       ts_headline('english', ""Content"", to_tsquery('english', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true') AS HighlightContent,
-                       ts_headline('english', ""Excerpt"", to_tsquery('english', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true') AS HighlightExcerpt
+                       ts_headline('english', ""Slug"", to_tsquery('english', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightSlug,
+                       ts_headline('english', ""Title"", to_tsquery('english', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightTitle,
+                       ts_headline('english', ""Content"", to_tsquery('english', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightContent,
+                       ts_headline('english', ""Excerpt"", to_tsquery('english', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightExcerpt
                 FROM (
                     SELECT ""Slug"", ""Title"", ""Content"", ""Excerpt"", ""Date"",
                     to_tsvector('english', ""Slug"" || ' ' || ""Title"" || ' ' || ""Excerpt"" || ' ' || ""Content"" || ' ' || ""Date"") AS SearchVector
@@ -131,7 +131,7 @@ namespace FullTextSearchDemo.Controllers
             command.CommandText = sql;
             var parameter = new NpgsqlParameter("@p0", formattedSearchTerm);
             command.Parameters.Add(parameter);
-            
+
             var results = new List<object>();
             using var reader = command.ExecuteReader();
             while (reader.Read())

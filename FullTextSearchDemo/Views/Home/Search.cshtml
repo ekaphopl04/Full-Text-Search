@@ -2,6 +2,16 @@
     ViewData["Title"] = "Search";
 }
 
+<style>
+    yellow {
+        background-color: yellow;
+        color: black;
+        font-weight: bold;
+        padding: 2px 4px;
+        border-radius: 3px;
+    }
+</style>
+
 @section Scripts {
     <script>
         // Call the GetBlogs API endpoint when the page loads
@@ -30,10 +40,12 @@
                 // Determine which API endpoint to call based on the search type
                 let apiUrl = '';
                 if (searchType === 'basic') {
-                    apiUrl = `/api/blogs/full-text/highlight?searchTerm=${encodeURIComponent(searchTerm)}`;
+                    apiUrl = `/api/blogs/contains/normalized?searchTerm=${encodeURIComponent(searchTerm)}`;
                 } else if (searchType === 'fulltext') {
                     apiUrl = `/api/blogs/full-text/ranking?searchTerm=${encodeURIComponent(searchTerm)}`;
-                } 
+                }  else if (searchType === 'fulltext-highlight') {
+                    apiUrl = `/api/blogs/full-text/highlight?searchTerm=${encodeURIComponent(searchTerm)}`;
+                }
                 
                 // Show loading state
                 const resultsContainer = document.getElementById('allBlogsContainer');
@@ -130,11 +142,11 @@
             blogs.forEach(blog => {
                 html += `
                     <tr>
-                        <td>${blog.highlightSlug}</td>
+                        <td>${blog.hasOwnProperty('highlightSlug') ? blog.highlightSlug : blog.slug}</td>
                         <td>${blog.date}</td>
-                        <td>${blog.highlightTitle}</td>
-                        <td>${blog.highlightContent}</td>
-                        <td>${blog.highlightExcerpt}</td>
+                        <td>${blog.hasOwnProperty('highlightTitle') ? blog.highlightTitle : blog.title}</td>
+                        <td>${blog.hasOwnProperty('highlightContent') ? blog.highlightContent : blog.content}</td>
+                        <td>${blog.hasOwnProperty('highlightExcerpt') ? blog.highlightExcerpt : blog.excerpt}</td>
                         ${blog.hasOwnProperty('rank') ? `<td>${blog.rank.toFixed(2)}</td>` : ''}
                         ${blog.hasOwnProperty('highlight') ? `<td>${blog.highlight}</td>` : ''}
                     </tr>
