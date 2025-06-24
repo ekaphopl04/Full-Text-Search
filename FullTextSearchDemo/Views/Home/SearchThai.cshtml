@@ -1,5 +1,5 @@
 @{
-    ViewData["Title"] = "Search";
+    ViewData["Title"] = "ค้นหา";
 }
 
 <style>
@@ -31,7 +31,7 @@
                 
                 const searchTerm = document.querySelector('input[name="searchTerm"]').value;
                 if (!searchTerm.trim()) {
-                    alert('Please enter a search term');
+                    alert('กรุณาใส่คำค้นหา');
                     return;
                 }
                 
@@ -52,9 +52,9 @@
                 resultsContainer.innerHTML = `
                     <div class="text-center">
                         <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
+                            <span class="visually-hidden">กำลังโหลด...</span>
                         </div>
-                        <p class="mt-2">Searching for "${searchTerm}"...</p>
+                        <p class="mt-2">กำลังค้นหา "${searchTerm}"...</p>
                     </div>
                 `;
                 
@@ -66,7 +66,7 @@
                     })
                     .catch(error => {
                         console.error('Error searching blogs:', error);
-                        resultsContainer.innerHTML = `<div class="alert alert-danger">Error searching blogs: ${error.message}</div>`;
+                        resultsContainer.innerHTML = `<div class="alert alert-danger">เกิดข้อผิดพลาดในการค้นหาบทความ: ${error.message}</div>`;
                     });
             });
         });
@@ -75,7 +75,7 @@
             const resultsContainer = document.getElementById('allBlogsContainer');
 
             if (!blogs || blogs.length === 0) {
-                resultsContainer.innerHTML = '<div class="alert alert-info">No blogs found</div>';
+                resultsContainer.innerHTML = '<div class="alert alert-info">ไม่พบบทความ</div>';
                 return;
             }
 
@@ -85,10 +85,10 @@
                             <thead>
                                 <tr>
                                     <th scope="col">Slug</th>
-                                    <th scope="col">Date</th>
-                                    <th scope="col">Title</th>
-                                    <th scope="col">Content</th>
-                                    <th scope="col">Excerpt</th>
+                                    <th scope="col">วันที่</th>
+                                    <th scope="col">หัวข้อ</th>
+                                    <th scope="col">เนื้อหา</th>
+                                    <th scope="col">บทคัดย่อ</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -116,24 +116,24 @@
             const resultsContainer = document.getElementById('allBlogsContainer');
 
             if (!blogs || blogs.length === 0) {
-                resultsContainer.innerHTML = `<div class="alert alert-info">No results found for "${searchTerm}"</div>`;
+                resultsContainer.innerHTML = `<div class="alert alert-info">ไม่พบผลลัพธ์สำหรับ "${searchTerm}"</div>`;
                 return;
             }
 
             let html = '';
             html += `
-                <h3>Search Results for "${searchTerm}"</h3>
-                <p>Found ${blogs.length} result(s)</p>
+                <h3>ผลการค้นหาสำหรับ "${searchTerm}"</h3>
+                <p>พบ ${blogs.length} ผลลัพธ์</p>
                 <table class="table">
                     <thead>
                         <tr>
                             <th scope="col">Slug</th>
-                            <th scope="col">Date</th>
-                            <th scope="col">Title</th>
-                            <th scope="col">Content</th>
-                            <th scope="col">Excerpt</th>
-                            ${blogs[0].hasOwnProperty('rank') ? '<th scope="col">Relevance Score</th>' : ''}
-                            ${blogs[0].hasOwnProperty('highlight') ? '<th scope="col">Highlighted Content</th>' : ''}
+                            <th scope="col">วันที่</th>
+                            <th scope="col">หัวข้อ</th>
+                            <th scope="col">เนื้อหา</th>
+                            <th scope="col">บทคัดย่อ</th>
+                            ${blogs[0].hasOwnProperty('rank') ? '<th scope="col">คะแนนความเกี่ยวข้อง</th>' : ''}
+                            ${blogs[0].hasOwnProperty('highlight') ? '<th scope="col">เนื้อหาที่ไฮไลท์</th>' : ''}
                         </tr>
                     </thead>
                     <tbody>
@@ -167,18 +167,18 @@
     <div class="row">
         <div class="col-12">
             <div class="d-flex justify-content-end mb-3">
-                <a href="/Home/SearchThai" class="btn btn-outline-primary">ภาษาไทย</a>
+                <a href="/Home/Search" class="btn btn-outline-primary">English</a>
             </div>
         </div>
     </div>
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="search-container">
-                <h1 class="mb-4">Search Articles</h1>
+                <h1 class="mb-4">ค้นหาบทความ</h1>
 
                 <form class="mb-4">
                     <div class="search-box mb-3">
-                        <input type="text" class="form-control" name="searchTerm" placeholder="Search articles..."
+                        <input type="text" class="form-control" name="searchTerm" placeholder="ค้นหาบทความ..."
                             required>
                         <button class="btn btn-search" type="submit">
                             <i class="bi bi-search"></i>
@@ -190,44 +190,44 @@
                             <input class="form-check-input" type="radio" name="searchType" id="basicSearch"
                                 value="basic" checked>
                             <label class="form-check-label" for="basicSearch">
-                                Basic Search
+                                ค้นหาพื้นฐาน
                             </label>
                         </div>
                         <div class="form-check form-check-inline">
                             <input class="form-check-input" type="radio" name="searchType" id="fullTextSearch"
                                 value="fulltext">
                             <label class="form-check-label" for="fullTextSearch">
-                                Full-Text Search
+                                ค้นหาแบบ Full-Text
                             </label>
                         </div>
                         <div class="form-check form-check-inline">
                             <input class="form-check-input" type="radio" name="searchType" id="fullTextHighlight"
                                 value="fulltext-highlight">
                             <label class="form-check-label" for="fullTextHighlight">
-                                Highlighted Search
+                                ค้นหาพร้อมไฮไลท์
                             </label>
                         </div>
                     </div>
                 </form>
 
                 <div class="search-tips bg-light p-3 rounded">
-                    <h5 class="mb-2"><i class="bi bi-lightbulb me-2"></i>Search Tips</h5>
+                    <h5 class="mb-2"><i class="bi bi-lightbulb me-2"></i>เคล็ดลับการค้นหา</h5>
                     <ul class="mb-0">
-                        <li>Use specific keywords for better results</li>
-                        <li>Full-text search works better with natural language queries</li>
-                        <li>Try the highlighted search to see where your terms appear</li>
+                        <li>ใช้คำค้นหาที่เฉพาะเจาะจงเพื่อผลลัพธ์ที่ดีขึ้น</li>
+                        <li>การค้นหาแบบ Full-text ทำงานได้ดีกับคำถามภาษาธรรมชาติ</li>
+                        <li>ลองใช้การค้นหาพร้อมไฮไลท์เพื่อดูว่าคำค้นหาของคุณปรากฏที่ใด</li>
                     </ul>
                 </div>
 
                 <div class="mt-5">
-                    <h2 class="mb-4">All Articles</h2>
+                    <h2 class="mb-4">บทความทั้งหมด</h2>
                     <div id="allBlogsContainer" class="results-container">
                         <!-- Blog posts will be loaded here via JavaScript -->
                         <div class="text-center">
                             <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
+                                <span class="visually-hidden">กำลังโหลด...</span>
                             </div>
-                            <p class="mt-2">Loading articles...</p>
+                            <p class="mt-2">กำลังโหลดบทความ...</p>
                         </div>
                     </div>
                 </div>

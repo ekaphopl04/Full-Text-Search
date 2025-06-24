@@ -30,6 +30,11 @@ namespace FullTextSearchDemo.Controllers
             return View();
         }
 
+        public IActionResult SearchThai()
+        {
+            return View();
+        }
+
         [HttpPost]
         public IActionResult SearchResults(string searchTerm, string searchType = "basic")
         {
