@@ -16,7 +16,7 @@
     <script>
         // Call the GetBlogs API endpoint when the page loads
         document.addEventListener('DOMContentLoaded', function () {
-            fetch('/api/blogs')
+            fetch('/api/blogs-thai')
                 .then(response => response.json())
                 .then(data => {
                     displayBlogs(data);
@@ -28,36 +28,36 @@
             // Client-side validation and API call handling
             document.querySelector('form').addEventListener('submit', function (e) {
                 e.preventDefault(); // Prevent the default form submission
-                
+
                 const searchTerm = document.querySelector('input[name="searchTerm"]').value;
                 if (!searchTerm.trim()) {
                     alert('กรุณาใส่คำค้นหา');
                     return;
                 }
-                
+
                 const searchType = document.querySelector('input[name="searchType"]:checked').value;
-                
+
                 // Determine which API endpoint to call based on the search type
                 let apiUrl = '';
                 if (searchType === 'basic') {
-                    apiUrl = `/api/blogs/contains/normalized?searchTerm=${encodeURIComponent(searchTerm)}`;
+                    apiUrl = `/api/blogs-thai/contains/normalized?searchTerm=${encodeURIComponent(searchTerm)}`;
                 } else if (searchType === 'fulltext') {
-                    apiUrl = `/api/blogs/full-text/ranking?searchTerm=${encodeURIComponent(searchTerm)}`;
-                }  else if (searchType === 'fulltext-highlight') {
-                    apiUrl = `/api/blogs/full-text/highlight?searchTerm=${encodeURIComponent(searchTerm)}`;
+                    apiUrl = `/api/blogs-thai/full-text/ranking?searchTerm=${encodeURIComponent(searchTerm)}`;
+                } else if (searchType === 'fulltext-highlight') {
+                    apiUrl = `/api/blogs-thai/full-text/highlight?searchTerm=${encodeURIComponent(searchTerm)}`;
                 }
-                
+
                 // Show loading state
                 const resultsContainer = document.getElementById('allBlogsContainer');
                 resultsContainer.innerHTML = `
-                    <div class="text-center">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">กำลังโหลด...</span>
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">กำลังโหลด...</span>
+                            </div>
+                            <p class="mt-2">กำลังค้นหา "${searchTerm}"...</p>
                         </div>
-                        <p class="mt-2">กำลังค้นหา "${searchTerm}"...</p>
-                    </div>
-                `;
-                
+                    `;
+
                 // Call the API
                 fetch(apiUrl)
                     .then(response => response.json())
@@ -81,37 +81,41 @@
 
             let html = '';
             html += `
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th scope="col">Slug</th>
-                                    <th scope="col">วันที่</th>
-                                    <th scope="col">หัวข้อ</th>
-                                    <th scope="col">เนื้อหา</th>
-                                    <th scope="col">บทคัดย่อ</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                    `;
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Slug</th>
+                                        <th scope="col">วันที่</th>
+                                        <th scope="col">ย่อหน้า</th>
+                                        <th scope="col">หน้า</th>
+                                        <th scope="col">หัวข้อ</th>
+                                        <th scope="col">เนื้อหา</th>
+                                        <th scope="col">บทคัดย่อ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                        `;
             blogs.forEach(blog => {
                 html += `
-                            <tr>
-                             <td>${blog.slug}</td>
-                              <td>${blog.date}</td>
-                               <td>${blog.title}</td>
-                               <td>${blog.content}</td>
-                               <td>${blog.excerpt}</td>
-                            </tr>
-                        `;
+                                <tr>
+                                 <td>${blog.slug}</td>
+                                  <td>${blog.date}</td>
+                                  <td>${blog.position}</td>
+                                  <td>${blog.page}</td>
+                                   <td>${blog.title}</td>
+                                   <td>${blog.content}</td>
+                                   <td>${blog.excerpt}</td>
+                                </tr>
+                            `;
             });
             html += `
-                            </tbody>
-                        </table>
-                    `;
+                                </tbody>
+                            </table>
+                        `;
 
             resultsContainer.innerHTML = html;
         }
-        
+
         function displaySearchResults(blogs, searchTerm) {
             const resultsContainer = document.getElementById('allBlogsContainer');
 
@@ -122,41 +126,45 @@
 
             let html = '';
             html += `
-                <h3>ผลการค้นหาสำหรับ "${searchTerm}"</h3>
-                <p>พบ ${blogs.length} ผลลัพธ์</p>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th scope="col">Slug</th>
-                            <th scope="col">วันที่</th>
-                            <th scope="col">หัวข้อ</th>
-                            <th scope="col">เนื้อหา</th>
-                            <th scope="col">บทคัดย่อ</th>
-                            ${blogs[0].hasOwnProperty('rank') ? '<th scope="col">คะแนนความเกี่ยวข้อง</th>' : ''}
-                            ${blogs[0].hasOwnProperty('highlight') ? '<th scope="col">เนื้อหาที่ไฮไลท์</th>' : ''}
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-            
+                    <h3>ผลการค้นหาสำหรับ "${searchTerm}"</h3>
+                    <p>พบ ${blogs.length} ผลลัพธ์</p>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Slug</th>
+                                <th scope="col">วันที่</th>
+                                <th scope="col">ย่อหน้า</th>
+                                <th scope="col">หน้า</th>
+                                <th scope="col">หัวข้อ</th>
+                                <th scope="col">เนื้อหา</th>
+                                <th scope="col">บทคัดย่อ</th>
+                                ${blogs[0].hasOwnProperty('rank') ? '<th scope="col">คะแนนความเกี่ยวข้อง</th>' : ''}
+                                ${blogs[0].hasOwnProperty('highlight') ? '<th scope="col">เนื้อหาที่ไฮไลท์</th>' : ''}
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
             blogs.forEach(blog => {
                 html += `
-                    <tr>
-                        <td>${blog.hasOwnProperty('highlightSlug') ? blog.highlightSlug : blog.slug}</td>
-                        <td>${blog.date}</td>
-                        <td>${blog.hasOwnProperty('highlightTitle') ? blog.highlightTitle : blog.title}</td>
-                        <td>${blog.hasOwnProperty('highlightContent') ? blog.highlightContent : blog.content}</td>
-                        <td>${blog.hasOwnProperty('highlightExcerpt') ? blog.highlightExcerpt : blog.excerpt}</td>
-                        ${blog.hasOwnProperty('rank') ? `<td>${blog.rank.toFixed(2)}</td>` : ''}
-                        ${blog.hasOwnProperty('highlight') ? `<td>${blog.highlight}</td>` : ''}
-                    </tr>
-                `;
+                        <tr>
+                            <td>${blog.hasOwnProperty('highlightSlug') ? blog.highlightSlug : blog.slug}</td>
+                            <td>${blog.date}</td>
+                            <td>${blog.position}</td>
+                            <td>${blog.page}</td>
+                            <td>${blog.hasOwnProperty('highlightTitle') ? blog.highlightTitle : blog.title}</td>
+                            <td>${blog.hasOwnProperty('highlightContent') ? blog.highlightContent : blog.content}</td>
+                            <td>${blog.hasOwnProperty('highlightExcerpt') ? blog.highlightExcerpt : blog.excerpt}</td>
+                            ${blog.hasOwnProperty('rank') ? `<td>${blog.rank.toFixed(2)}</td>` : ''}
+                            ${blog.hasOwnProperty('highlight') ? `<td>${blog.highlight}</td>` : ''}
+                        </tr>
+                    `;
             });
-            
+
             html += `
-                    </tbody>
-                </table>
-            `;
+                        </tbody>
+                    </table>
+                `;
 
             resultsContainer.innerHTML = html;
         }
@@ -178,8 +186,7 @@
 
                 <form class="mb-4">
                     <div class="search-box mb-3">
-                        <input type="text" class="form-control" name="searchTerm" placeholder="ค้นหาบทความ..."
-                            required>
+                        <input type="text" class="form-control" name="searchTerm" placeholder="ค้นหาบทความ..." required>
                         <button class="btn btn-search" type="submit">
                             <i class="bi bi-search"></i>
                         </button>
