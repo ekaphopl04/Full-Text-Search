@@ -93,8 +93,8 @@ namespace FullTextSearchDemo.Controllers
         {
             var blogs = _context.BlogPostsThai
                 .Where(b =>
-                    EF.Functions.ToTsVector("simple", b.Title + " " + b.Excerpt + " " + b.Content)
-                    .Matches(EF.Functions.PhraseToTsQuery("simple", searchTerm)))
+                    EF.Functions.ToTsVector("thai", b.Title + " " + b.Excerpt + " " + b.Content)
+                    .Matches(EF.Functions.ToTsQuery("thai", searchTerm)))
                 .Select(b => new
                 {
                     b.Slug,
@@ -108,6 +108,69 @@ namespace FullTextSearchDemo.Controllers
                 .ToList();
 
             return Ok(blogs);
+        }
+        // Full-text search with headline highlighting for Thai language using tsvector with improved search
+        [HttpGet("full-text/highlight-thai")]
+        public IActionResult SearchFullTextHighlightThai([FromQuery] string searchTerm)
+        {
+            // แปลงคำค้นหาให้เหมาะสมกับภาษาไทยและใช้ prefix search
+            // 1. แยกคำค้นหาตามช่องว่าง
+            var searchTerms = searchTerm.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+            // 2. เพิ่ม :* ต่อท้ายแต่ละคำเพื่อให้เป็น prefix search (ค้นหาคำที่ขึ้นต้นด้วย)
+            var formattedTerms = searchTerms.Select(term => term + ":*");
+
+            // 3. เชื่อมคำด้วย | (OR) เพื่อให้ค้นหาคำใดคำหนึ่ง
+            var formattedSearchTerm = string.Join(" | ", formattedTerms);
+
+            // ถ้าไม่มีคำค้นหา ให้ใช้คำค้นหาเดิม
+            if (string.IsNullOrEmpty(formattedSearchTerm))
+            {
+                formattedSearchTerm = searchTerm + ":*";
+            }
+
+            // ใช้ raw SQL เพื่อใช้ tsvector และ tsquery กับ prefix search
+            var sql = @"
+                SELECT ""Slug"", ""Title"", ""Content"", ""Excerpt"", ""Date"", ""Position"", ""Page"",
+                       ts_headline('thai', ""Content"", to_tsquery('thai', @p0), 'HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightContent,
+                       ts_headline('thai', ""Title"", to_tsquery('thai', @p0), 'HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightTitle,
+                       ts_headline('thai', ""Excerpt"", to_tsquery('thai', @p0), 'HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightExcerpt,
+                       ts_rank_cd(to_tsvector('thai', ""Title"" || ' ' || ""Content"" || ' ' || ""Excerpt""), to_tsquery('thai', @p0)) AS Rank
+                FROM ""BlogPostsThai""
+                WHERE 
+                    to_tsvector('thai', ""Title"" || ' ' || ""Content"" || ' ' || ""Excerpt"") @@ to_tsquery('thai', @p0)
+                ORDER BY Rank DESC";
+
+            using var connection = _context.Database.GetDbConnection();
+            connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = sql;
+
+            // พารามิเตอร์สำหรับ to_tsquery
+            var parameter1 = new NpgsqlParameter("@p0", formattedSearchTerm);
+            command.Parameters.Add(parameter1);
+
+            var results = new List<object>();
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                results.Add(new
+                {
+                    Slug = reader.GetString(0),
+                    Title = reader.GetString(1),
+                    Content = reader.GetString(2),
+                    Excerpt = reader.GetString(3),
+                    Date = reader.GetString(4),
+                    Position = reader.GetString(5),
+                    Page = reader.GetString(6),
+                    HighlightContent = reader.GetString(7),
+                    HighlightTitle = reader.GetString(8),
+                    HighlightExcerpt = reader.GetString(9),
+                    Rank = reader.GetDouble(10)
+                });
+            }
+
+            return Ok(results);
         }
 
         // Full-text search with headline highlighting
@@ -143,6 +206,30 @@ namespace FullTextSearchDemo.Controllers
                     Title = Regex.Replace(b.Title, searchTerm, m => $"<yellow>{m.Value}</yellow>", RegexOptions.IgnoreCase),
                     Content = Regex.Replace(b.Content, searchTerm, m => $"<yellow>{m.Value}</yellow>", RegexOptions.IgnoreCase),
                     Excerpt = Regex.Replace(b.Excerpt, searchTerm, m => $"<yellow>{m.Value}</yellow>", RegexOptions.IgnoreCase),
+                    b.Date,
+                    b.Position,
+                    b.Page
+                })
+                .ToList();
+
+            return Ok(blogs);
+        }
+
+        // Thai text search with word boundaries (for partial matches)
+        [HttpGet("thai-word-search")]
+        public IActionResult SearchThaiWords([FromQuery] string searchTerm)
+        {
+            var blogs = _context.BlogPostsThai
+                .Where(b =>
+                    EF.Functions.ILike(b.Title, $"%{searchTerm}%") ||
+                    EF.Functions.ILike(b.Excerpt, $"%{searchTerm}%") ||
+                    EF.Functions.ILike(b.Content, $"%{searchTerm}%"))
+                .Select(b => new
+                {
+                    b.Slug,
+                    b.Title,
+                    b.Content,
+                    b.Excerpt,
                     b.Date,
                     b.Position,
                     b.Page

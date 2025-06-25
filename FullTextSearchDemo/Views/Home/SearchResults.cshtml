@@ -1,3 +1,4 @@
+@using System.Collections
 @{
     ViewData["Title"] = "Search Results";
     var searchTerm = ViewBag.SearchTerm;
@@ -26,9 +27,9 @@
                     <span class="badge bg-primary">@(searchType == "fulltext" ? "Full-Text Search" : "Basic Search")</span>
                 </div>
 
-                @if (results != null && results.Count > 0)
+                @if (results is not null && ((IList)results).Count > 0)
                 {
-                    <p class="results-count">Showing @(results?.Count ?? 0) results:</p>
+                    <p class="results-count">Showing @(((IList)results)?.Count ?? 0) results:</p>
 
                     <div class="results-container">
                         <table class="table table-striped">
@@ -48,15 +49,19 @@
                                     var isFirstResult = true;
                                 }
                                 
-                                @foreach (var blog in results)
+                                @foreach (var blog in results!)
                                 {
                                     double relevanceScore = 0;
                                     try
                                     {
-                                        var rankProp = blog.GetType().GetProperty("Rank");
+                                        var rankProp = blog?.GetType().GetProperty("Rank");
                                         if (rankProp != null)
                                         {
-                                            relevanceScore = Convert.ToDouble(rankProp.GetValue(blog));
+                                            var rankValue = rankProp.GetValue(blog);
+                                            if (rankValue != null)
+                                            {
+                                                relevanceScore = Convert.ToDouble(rankValue);
+                                            }
                                         }
                                     }
                                     catch { /* Ignore any conversion errors */ }
@@ -65,9 +70,9 @@
                                     var isMostRelevant = isFirstResult;
                                     
                                     <tr class="@(isMostRelevant && searchType == "fulltext" ? "table-primary" : "")">
-                                        <td>@(blog.Date != null ? blog.Date.ToString("yyyy-MM-dd") : "No date")</td>
-                                        <td>@(blog.Title ?? "Untitled")</td>
-                                        <td>@(blog.Excerpt ?? "No excerpt available")</td>
+                                        <td>@(blog?.Date?.ToString("yyyy-MM-dd") ?? "No date")</td>
+                                        <td>@(blog?.Title ?? "Untitled")</td>
+                                        <td>@(blog?.Excerpt ?? "No excerpt available")</td>
                                         @if (searchType == "fulltext")
                                         {
                                             <td>
@@ -83,7 +88,7 @@
                                         }
                                     </tr>
                                     
-                                    { isFirstResult = false; }
+                                    isFirstResult = false;
                                 }
                             </tbody>
                         </table>

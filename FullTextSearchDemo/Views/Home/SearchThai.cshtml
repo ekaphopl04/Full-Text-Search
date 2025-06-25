@@ -42,7 +42,7 @@
                 if (searchType === 'basic') {
                     apiUrl = `/api/blogs-thai/contains/normalized?searchTerm=${encodeURIComponent(searchTerm)}`;
                 } else if (searchType === 'fulltext') {
-                    apiUrl = `/api/blogs-thai/full-text/ranking?searchTerm=${encodeURIComponent(searchTerm)}`;
+                    apiUrl = `/api/blogs-thai/full-text/highlight-thai?searchTerm=${encodeURIComponent(searchTerm)}`;
                 } else if (searchType === 'fulltext-highlight') {
                     apiUrl = `/api/blogs-thai/full-text/highlight?searchTerm=${encodeURIComponent(searchTerm)}`;
                 }
