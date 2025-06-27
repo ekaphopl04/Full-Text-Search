@@ -5,6 +5,7 @@ using FullTextSearchDemo.Services;
 using Microsoft.EntityFrameworkCore;
 using System.Data.Common;
 using Npgsql;
+using System.Text;
 
 namespace FullTextSearchDemo.Controllers
 {
@@ -196,6 +197,72 @@ namespace FullTextSearchDemo.Controllers
                 .ToList();
 
             return Ok(blogs);
+        }
+        
+        // Full-text search with synonyms
+        [HttpGet("full-text/synonyms")]
+        public IActionResult SearchWithSynonyms([FromQuery] string searchTerm)
+        {
+            if (string.IsNullOrWhiteSpace(searchTerm))
+            {
+                return Ok(_context.BlogPosts.ToList());
+            }
+            
+            // Format the search term for PostgreSQL full-text search with synonyms
+            var formattedSearchTerm = FormatSearchTermForTsQuery(searchTerm);
+            
+            // Use raw SQL to perform search with the synonym dictionary
+            var sql = @"
+                SELECT ""Slug"", ""Title"", ""Content"", ""Excerpt"", ""Date"",
+                       ts_rank_cd(to_tsvector('english_synonyms', ""Title"" || ' ' || ""Excerpt"" || ' ' || ""Content""), 
+                                 to_tsquery('english_synonyms', @p0)) AS Rank
+                FROM ""BlogPosts""
+                WHERE to_tsvector('english_synonyms', ""Title"" || ' ' || ""Excerpt"" || ' ' || ""Content"") @@ to_tsquery('english_synonyms', @p0)
+                ORDER BY Rank DESC";
+
+            using var connection = _context.Database.GetDbConnection();
+            connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = sql;
+            var parameter = new NpgsqlParameter("@p0", formattedSearchTerm);
+            command.Parameters.Add(parameter);
+
+            var results = new List<object>();
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                results.Add(new
+                {
+                    Slug = reader.GetString(0),
+                    Title = reader.GetString(1),
+                    Content = reader.GetString(2),
+                    Excerpt = reader.GetString(3),
+                    Date = reader.GetString(4),
+                    Rank = reader.GetDouble(5)
+                });
+            }
+
+            return Ok(results);
+        }
+        
+        // Helper method to format search terms for tsquery
+        private string FormatSearchTermForTsQuery(string searchTerm)
+        {
+            // Split the search term into words
+            var words = searchTerm.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            
+            // Join words with the OR operator (|)
+            var formattedQuery = new StringBuilder();
+            for (int i = 0; i < words.Length; i++)
+            {
+                formattedQuery.Append(words[i]);
+                if (i < words.Length - 1)
+                {
+                    formattedQuery.Append(" | ");
+                }
+            }
+            
+            return formattedQuery.ToString();
         }
     }
 }

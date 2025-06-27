@@ -6,6 +6,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Npgsql;
+using System.IO;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,6 +49,8 @@ app.MapControllerRoute(
 
 app.MapControllers();
 
+// Set up synonym dictionary for full-text search
+SetupSynonymDictionary(app);
 
 // Basic search using LIKE/Contains
 app.MapGet("/blogs/contains", (string searchTerm, BlogsDbContext context) =>
@@ -129,4 +134,53 @@ app.MapGet("/blogs/vector/full-text/ranking", (string searchTerm, BlogsDbContext
 
 app.Run();
 
-
+// Method to set up the synonym dictionary in PostgreSQL
+void SetupSynonymDictionary(WebApplication app)
+{
+    try
+    {
+        using var scope = app.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<BlogsDbContext>();
+        var connection = dbContext.Database.GetDbConnection() as NpgsqlConnection;
+        
+        // Copy the synonyms file to PostgreSQL's data directory
+        var synonymsFilePath = Path.Combine(app.Environment.ContentRootPath, "wordnet_synonyms.syn");
+        if (File.Exists(synonymsFilePath))
+        {
+            // Execute the SQL script to set up the synonym dictionary
+            var sqlScript = File.ReadAllText(Path.Combine(app.Environment.ContentRootPath, "Database", "SetupSynonyms.sql"));
+            
+            connection?.Open();
+            using var command = connection?.CreateCommand();
+            if (command != null)
+            {
+                command.CommandText = sqlScript;
+                try
+                {
+                    command.ExecuteNonQuery();
+                    Console.WriteLine("Synonym dictionary set up successfully.");
+                }
+                catch (PostgresException ex)
+                {
+                    // If the dictionary already exists, this is fine
+                    if (ex.SqlState == "42710") // duplicate_object
+                    {
+                        Console.WriteLine("Synonym dictionary already exists.");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Error setting up synonym dictionary: {ex.Message}");
+                    }
+                }
+            }
+        }
+        else
+        {
+            Console.WriteLine($"Synonym file not found at: {synonymsFilePath}");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error setting up synonym dictionary: {ex.Message}");
+    }
+}
