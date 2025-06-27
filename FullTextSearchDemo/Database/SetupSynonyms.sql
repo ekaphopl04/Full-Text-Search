@@ -1,3 +1,7 @@
+-- Drop existing dictionary and configuration if they exist
+DROP TEXT SEARCH CONFIGURATION IF EXISTS english_synonyms;
+DROP TEXT SEARCH DICTIONARY IF EXISTS english_synonym;
+
 -- Create a synonym dictionary using the wordnet_synonyms.syn file
 CREATE TEXT SEARCH DICTIONARY english_synonym (
     TEMPLATE = synonym,
