@@ -198,7 +198,7 @@ namespace FullTextSearchDemo.Controllers
 
             return Ok(blogs);
         }
-        
+
         // Full-text search with synonyms
         [HttpGet("full-text/synonyms")]
         public IActionResult SearchWithSynonyms([FromQuery] string searchTerm)
@@ -207,18 +207,19 @@ namespace FullTextSearchDemo.Controllers
             {
                 return Ok(_context.BlogPosts.ToList());
             }
-            
+
             // Format the search term for PostgreSQL full-text search with synonyms
             var formattedSearchTerm = FormatSearchTermForTsQuery(searchTerm);
-            
+
             // Use raw SQL to perform search with the synonym dictionary
             var sql = @"
                 SELECT ""Slug"", ""Title"", ""Content"", ""Excerpt"", ""Date"",
-                       ts_rank_cd(to_tsvector('english_synonyms', ""Title"" || ' ' || ""Excerpt"" || ' ' || ""Content""), 
-                                 to_tsquery('english_synonyms', @p0)) AS Rank
+                       ts_headline('english_synonyms', ""Slug"", to_tsquery('english_synonyms', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightSlug,
+                       ts_headline('english_synonyms', ""Title"", to_tsquery('english_synonyms', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightTitle,
+                       ts_headline('english_synonyms', ""Content"", to_tsquery('english_synonyms', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightContent,
+                       ts_headline('english_synonyms', ""Excerpt"", to_tsquery('english_synonyms', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightExcerpt
                 FROM ""BlogPosts""
-                WHERE to_tsvector('english_synonyms', ""Title"" || ' ' || ""Excerpt"" || ' ' || ""Content"") @@ to_tsquery('english_synonyms', @p0)
-                ORDER BY Rank DESC";
+                WHERE to_tsvector('english_synonyms', ""Title"" || ' ' || ""Excerpt"" || ' ' || ""Content"") @@ to_tsquery('english_synonyms', @p0)";
 
             using var connection = _context.Database.GetDbConnection();
             connection.Open();
@@ -238,19 +239,22 @@ namespace FullTextSearchDemo.Controllers
                     Content = reader.GetString(2),
                     Excerpt = reader.GetString(3),
                     Date = reader.GetString(4),
-                    Rank = reader.GetDouble(5)
+                    HighlightSlug = reader.GetString(5),
+                    HighlightTitle = reader.GetString(6),
+                    HighlightContent = reader.GetString(7),
+                    HighlightExcerpt = reader.GetString(8)
                 });
             }
 
             return Ok(results);
         }
-        
+
         // Helper method to format search terms for tsquery
         private string FormatSearchTermForTsQuery(string searchTerm)
         {
             // Split the search term into words
             var words = searchTerm.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            
+
             // Join words with the OR operator (|)
             var formattedQuery = new StringBuilder();
             for (int i = 0; i < words.Length; i++)
@@ -261,7 +265,7 @@ namespace FullTextSearchDemo.Controllers
                     formattedQuery.Append(" | ");
                 }
             }
-            
+
             return formattedQuery.ToString();
         }
     }
