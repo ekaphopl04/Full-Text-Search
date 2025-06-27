@@ -114,16 +114,16 @@ namespace FullTextSearchDemo.Controllers
             // Use raw SQL to get highlighting with ts_headline
             var sql = @"
                 SELECT ""Slug"", ""Title"", ""Content"", ""Excerpt"", ""Date"",
-                       ts_headline('english', ""Slug"", to_tsquery('english', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightSlug,
-                       ts_headline('english', ""Title"", to_tsquery('english', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightTitle,
-                       ts_headline('english', ""Content"", to_tsquery('english', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightContent,
-                       ts_headline('english', ""Excerpt"", to_tsquery('english', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightExcerpt
+                       ts_headline('wordnet_config', ""Slug"", to_tsquery('wordnet_config', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightSlug,
+                       ts_headline('wordnet_config', ""Title"", to_tsquery('wordnet_config', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightTitle,
+                       ts_headline('wordnet_config', ""Content"", to_tsquery('wordnet_config', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightContent,
+                       ts_headline('wordnet_config', ""Excerpt"", to_tsquery('wordnet_config', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightExcerpt
                 FROM (
                     SELECT ""Slug"", ""Title"", ""Content"", ""Excerpt"", ""Date"",
-                    to_tsvector('english', ""Slug"" || ' ' || ""Title"" || ' ' || ""Excerpt"" || ' ' || ""Content"" || ' ' || ""Date"") AS SearchVector
+                    to_tsvector('wordnet_config', ""Slug"" || ' ' || ""Title"" || ' ' || ""Excerpt"" || ' ' || ""Content"" || ' ' || ""Date"") AS SearchVector
                     FROM ""BlogPosts""
                 ) AS BlogPosts
-                WHERE SearchVector @@ to_tsquery('english', @p0)";
+                WHERE SearchVector @@ to_tsquery('wordnet_config', @p0)";
 
             using var connection = _context.Database.GetDbConnection();
             connection.Open();
@@ -159,8 +159,8 @@ namespace FullTextSearchDemo.Controllers
         {
             var blogs = _context.BlogPosts
                 .Where(b =>
-                    EF.Functions.ToTsVector("english", b.Title + " " + b.Excerpt + " " + b.Content)
-                    .Matches(EF.Functions.PhraseToTsQuery("english", searchTerm)))
+                    EF.Functions.ToTsVector("wordnet_config", b.Title + " " + b.Excerpt + " " + b.Content)
+                    .Matches(EF.Functions.PhraseToTsQuery("wordnet_config", searchTerm)))
                 .Select(b => new
                 {
                     b.Slug,
@@ -168,7 +168,7 @@ namespace FullTextSearchDemo.Controllers
                     b.Content,
                     b.Excerpt,
                     b.Date,
-                    Rank = EF.Functions.ToTsVector("english", b.Title + " " + b.Excerpt + " " + b.Content).Rank(EF.Functions.PhraseToTsQuery("english", searchTerm))
+                    Rank = EF.Functions.ToTsVector("wordnet_config", b.Title + " " + b.Excerpt + " " + b.Content).Rank(EF.Functions.PhraseToTsQuery("wordnet_config", searchTerm))
                 })
                 .OrderByDescending(b => b.Rank)
                 .ToList();
