@@ -132,13 +132,13 @@ namespace FullTextSearchDemo.Controllers
             // ใช้ raw SQL เพื่อใช้ tsvector และ tsquery กับ prefix search
             var sql = @"
                 SELECT ""Slug"", ""Title"", ""Content"", ""Excerpt"", ""Date"", ""Position"", ""Page"",
-                       ts_headline('thai', ""Content"", to_tsquery('thai', @p0), 'HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightContent,
-                       ts_headline('thai', ""Title"", to_tsquery('thai', @p0), 'HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightTitle,
-                       ts_headline('thai', ""Excerpt"", to_tsquery('thai', @p0), 'HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightExcerpt,
-                       ts_rank_cd(to_tsvector('thai', ""Title"" || ' ' || ""Content"" || ' ' || ""Excerpt""), to_tsquery('thai', @p0)) AS Rank
+                       ts_headline('thai_synonyms', ""Content"", to_tsquery('thai_synonyms', @p0), 'HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightContent,
+                       ts_headline('thai_synonyms', ""Title"", to_tsquery('thai_synonyms', @p0), 'HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightTitle,
+                       ts_headline('thai_synonyms', ""Excerpt"", to_tsquery('thai_synonyms', @p0), 'HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightExcerpt,
+                       ts_rank_cd(to_tsvector('thai_synonyms', ""Title"" || ' ' || ""Content"" || ' ' || ""Excerpt""), to_tsquery('thai_synonyms', @p0)) AS Rank
                 FROM ""BlogPostsThai""
                 WHERE 
-                    to_tsvector('thai', ""Title"" || ' ' || ""Content"" || ' ' || ""Excerpt"") @@ to_tsquery('thai', @p0)
+                    to_tsvector('thai_synonyms', ""Title"" || ' ' || ""Content"" || ' ' || ""Excerpt"") @@ to_tsquery('thai_synonyms', @p0)
                 ORDER BY Rank DESC";
 
             using var connection = _context.Database.GetDbConnection();
