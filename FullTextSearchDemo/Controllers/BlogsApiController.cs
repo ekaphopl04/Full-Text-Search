@@ -256,13 +256,18 @@ namespace FullTextSearchDemo.Controllers
         [HttpGet("full-text/synonyms")]
         public IActionResult SearchWithSynonyms([FromQuery] string searchTerm)
         {
+            Console.WriteLine($"Searching with synonyms: {searchTerm}");
+
             if (string.IsNullOrWhiteSpace(searchTerm))
             {
+                Console.WriteLine("No search term provided. Returning all blog posts.");
                 return Ok(_context.BlogPosts.ToList());
             }
 
             // Format the search term for PostgreSQL full-text search with synonyms
             var formattedSearchTerm = FormatSearchTermForTsQuery(searchTerm);
+
+            Console.WriteLine($"Formatted search term: {formattedSearchTerm}");
 
             // Use raw SQL to perform search with the synonym dictionary
             var sql = @"
@@ -299,12 +304,16 @@ namespace FullTextSearchDemo.Controllers
                 });
             }
 
+            Console.WriteLine("Search completed. Returning results.");
+
             return Ok(results);
         }
 
         // Helper method to format search terms for tsquery
         private string FormatSearchTermForTsQuery(string searchTerm)
         {
+            Console.WriteLine($"Formatting search term: {searchTerm}");
+
             // Split the search term into words
             var words = searchTerm.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
@@ -320,7 +329,11 @@ namespace FullTextSearchDemo.Controllers
                 }
             }
 
+            Console.WriteLine($"Formatted search term: {formattedQuery}");
+
             return formattedQuery.ToString();
         }
     }
+
+    
 }

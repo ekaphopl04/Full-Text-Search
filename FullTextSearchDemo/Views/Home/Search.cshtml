@@ -47,6 +47,8 @@
                     apiUrl = `/api/blogs/full-text/highlight?searchTerm=${encodeURIComponent(searchTerm)}`;
                 } else if (searchType === 'fulltext-synonyms') {
                     apiUrl = `/api/blogs/full-text/synonyms?searchTerm=${encodeURIComponent(searchTerm)}`;
+                } else if (searchType === 'fulltext-vector') {
+                    apiUrl = `/api/blogs/full-text/vector?searchTerm=${encodeURIComponent(searchTerm)}`;
                 }
                 
                 // Show loading state
@@ -202,7 +204,13 @@
                                 Full-Text Search
                             </label>
                         </div>
-                        <div class="form-check form-check-inline">
+                         <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="searchType" id="fullTextSearch"
+                                value="fulltext">
+                            <label class="form-check-label" for="fullTextSearch">
+                                Full-Text VectorSearch
+                            </label>
+                        </div><div class="form-check form-check-inline">
                             <input class="form-check-input" type="radio" name="searchType" id="fullTextHighlight"
                                 value="fulltext-highlight">
                             <label class="form-check-label" for="fullTextHighlight">
