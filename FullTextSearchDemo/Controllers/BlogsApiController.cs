@@ -72,17 +72,70 @@ namespace FullTextSearchDemo.Controllers
                     b.Title.ToLower().Contains(searchTerm.ToLower()) ||
                     b.Excerpt.ToLower().Contains(searchTerm.ToLower()) ||
                     b.Content.ToLower().Contains(searchTerm.ToLower()))
-                .Select(b => new
+                .ToList();
+                
+            var results = blogs.Select(b => {
+                // Create highlighted versions of the content
+                string highlightedTitle = HighlightText(b.Title, searchTerm);
+                string highlightedExcerpt = HighlightText(b.Excerpt, searchTerm);
+                string highlightedContent = HighlightText(b.Content, searchTerm);
+                
+                return new
                 {
                     b.Slug,
-                    b.Title,
-                    b.Content,
-                    b.Excerpt,
-                    b.Date
-                })
-                .ToList();
+                    Title = b.Title,
+                    Content = b.Content,
+                    Excerpt = b.Excerpt,
+                    b.Date,
+                    HighlightTitle = highlightedTitle,
+                    HighlightExcerpt = highlightedExcerpt,
+                    HighlightContent = highlightedContent
+                };
+            }).ToList();
 
-            return Ok(blogs);
+            return Ok(results);
+        }
+        
+        // Helper method to add highlighting tags around matched text
+        private string HighlightText(string text, string searchTerm)
+        {
+            if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(searchTerm))
+                return text;
+                
+            string normalizedText = text;
+            string normalizedSearchTerm = searchTerm.ToLower();
+            
+            // Find all occurrences of the search term (case-insensitive)
+            int startIndex = 0;
+            StringBuilder result = new StringBuilder();
+            int currentIndex = normalizedText.ToLower().IndexOf(normalizedSearchTerm, startIndex);
+            
+            if (currentIndex == -1)
+                return text;
+                
+            int lastIndex = 0;
+            while (currentIndex != -1)
+            {
+                // Add the text before the match
+                result.Append(normalizedText.Substring(lastIndex, currentIndex - lastIndex));
+                
+                // Add the highlighted match
+                result.Append("<yellow>");
+                result.Append(normalizedText.Substring(currentIndex, searchTerm.Length));
+                result.Append("</yellow>");
+                
+                // Update indices
+                lastIndex = currentIndex + searchTerm.Length;
+                currentIndex = normalizedText.ToLower().IndexOf(normalizedSearchTerm, lastIndex);
+            }
+            
+            // Add any remaining text
+            if (lastIndex < normalizedText.Length)
+            {
+                result.Append(normalizedText.Substring(lastIndex));
+            }
+            
+            return result.ToString();
         }
 
         // Full-text search
