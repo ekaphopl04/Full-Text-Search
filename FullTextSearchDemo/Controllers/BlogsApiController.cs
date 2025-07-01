@@ -267,12 +267,12 @@ namespace FullTextSearchDemo.Controllers
             // Use raw SQL to perform search with the synonym dictionary
             var sql = @"
                 SELECT ""Slug"", ""Title"", ""Content"", ""Excerpt"", ""Date"",
-                       ts_headline('english_synonyms', ""Slug"", plainto_tsquery('english_synonyms', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightSlug,
-                       ts_headline('english_synonyms', ""Title"", plainto_tsquery('english_synonyms', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightTitle,
-                       ts_headline('english_synonyms', ""Content"", plainto_tsquery('english_synonyms', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightContent,
-                       ts_headline('english_synonyms', ""Excerpt"", plainto_tsquery('english_synonyms', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightExcerpt
+                       ts_headline('english_synonyms', ""Slug"", to_tsquery('english_synonyms', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightSlug,
+                       ts_headline('english_synonyms', ""Title"", to_tsquery('english_synonyms', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightTitle,
+                       ts_headline('english_synonyms', ""Content"", to_tsquery('english_synonyms', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightContent,
+                       ts_headline('english_synonyms', ""Excerpt"", to_tsquery('english_synonyms', @p0), 'MaxWords=50, MinWords=10, ShortWord=3, HighlightAll=true, StartSel=<yellow>, StopSel=</yellow>') AS HighlightExcerpt
                 FROM ""BlogPosts""
-                WHERE to_tsvector('english_synonyms', ""Title"" || ' ' || ""Excerpt"" || ' ' || ""Content"") @@ plainto_tsquery('english_synonyms', @p0)";
+                WHERE to_tsvector('english_synonyms', ""Title"" || ' ' || ""Excerpt"" || ' ' || ""Content"") @@ to_tsquery('english_synonyms', @p0)";
 
             using var connection = _context.Database.GetDbConnection();
             connection.Open();
