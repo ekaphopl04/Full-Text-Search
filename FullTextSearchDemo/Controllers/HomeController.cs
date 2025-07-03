@@ -3,6 +3,7 @@ using FullTextSearchDemo.Database;
 using FullTextSearchDemo.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Linq;
 using System;
@@ -13,11 +14,13 @@ namespace FullTextSearchDemo.Controllers
     {
         private readonly BlogsDbContext _context;
         private readonly BlogService _blogService;
+        private readonly ILogger<HomeController> _logger;
 
-        public HomeController(BlogsDbContext context, BlogService blogService)
+        public HomeController(BlogsDbContext context, BlogService blogService, ILogger<HomeController> logger)
         {
             _context = context;
             _blogService = blogService;
+            _logger = logger;
         }
 
         public IActionResult Index()
@@ -30,6 +33,23 @@ namespace FullTextSearchDemo.Controllers
             return View();
         }
 
+        public IActionResult Test()
+        {
+            return View();
+        }
+        
+        [HttpPost]
+        public IActionResult TestSubmit(string searchTerm, string searchType = "basic")
+        {
+            // Log the submitted form data
+            _logger.LogInformation("Form submitted in Test - Search Term: {SearchTerm}, Search Type: {SearchType}", searchTerm, searchType);
+            
+            // Store the form data in TempData to display it in the view
+            TempData["SubmittedData"] = $"Search Term: {searchTerm}\nSearch Type: {searchType}\nSubmitted at: {DateTime.Now}";
+            
+            return RedirectToAction("Test");
+        }
+
         public IActionResult SearchThai()
         {
             return View();
@@ -38,6 +58,9 @@ namespace FullTextSearchDemo.Controllers
         [HttpPost]
         public IActionResult SearchResults(string searchTerm, string searchType = "basic")
         {
+            // Log the submitted form data
+            _logger.LogInformation("Form submitted - Search Term: {SearchTerm}, Search Type: {SearchType}", searchTerm, searchType);
+            
             ViewBag.SearchTerm = searchTerm;
             ViewBag.SearchType = searchType;
 
